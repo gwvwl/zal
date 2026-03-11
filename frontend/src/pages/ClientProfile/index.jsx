@@ -1,15 +1,21 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
-  clientEnter,
-  clientExit,
+  fetchClient,
+  updateClientThunk,
+  clearCurrentClient,
+} from "../../store/slices/clientsSlice.js";
+import {
+  fetchClientSubscriptions,
+  activateSubscriptionThunk,
+  unfreezeSubscriptionThunk,
+} from "../../store/slices/subscriptionsSlice.js";
+import {
+  enterGymThunk,
+  exitGymThunk,
   selectIsInGym,
   selectCurrentVisit,
 } from "../../store/slices/gymSlice.js";
-import {
-  updateClient,
-} from "../../store/slices/clientsSlice.js";
-import $api from "../../api/http.js";
 import { useToast } from "../../components/Toast.jsx";
 import { useConfirm } from "../../components/ConfirmDialog.jsx";
 import ClientInfoCard from "./components/ClientInfoCard.jsx";
@@ -38,35 +44,27 @@ export default function ClientProfile({ clientId, onClose }) {
   const [showAddSub, setShowAddSub] = useState(false);
   const [showReplaceCard, setShowReplaceCard] = useState(false);
   const [freezeSubId, setFreezeSubId] = useState(null);
-  const [clientSubs, setClientSubs] = useState([]);
-  const [client, setClient] = useState(null);
 
+  const client = useSelector(state => state.clients.currentClient);
+  const clientSubs = useSelector(state => state.subscriptions.clientSubs);
   const isInGym = useSelector((state) => selectIsInGym(state, clientId));
   const currentVisit = useSelector((state) => selectCurrentVisit(state, clientId));
 
   const STATUS_ORDER = { active: 0, frozen: 1, purchased: 2 };
   const activeSubs = clientSubs
-    .filter(s => s.status === 'active' || s.status === 'frozen' || s.status === 'purchased')
+    .filter(s => s.status === "active" || s.status === "frozen" || s.status === "purchased")
     .sort((a, b) => (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9));
 
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
   }, []);
 
   useEffect(() => {
-    $api.get(`/clients/${clientId}`)
-      .then(({ data }) => setClient(data))
-      .catch(() => toast('Не вдалося завантажити клієнта'));
-  }, [clientId]);
-
-  const loadSubs = useCallback(() => {
-    $api.get("/subscriptions", { params: { clientId } })
-      .then(({ data }) => setClientSubs(data))
-      .catch(() => toast('Не вдалося завантажити абонементи'));
-  }, [clientId, toast]);
-
-  useEffect(() => { loadSubs(); }, [loadSubs]);
+    dispatch(clearCurrentClient());
+    dispatch(fetchClient(clientId));
+    dispatch(fetchClientSubscriptions(clientId));
+  }, [clientId, dispatch]);
 
   function startEdit() {
     setEditForm({
@@ -113,44 +111,44 @@ export default function ClientProfile({ clientId, onClose }) {
       setEditErrors(errs);
       return;
     }
-    try {
-      const formData = new FormData();
-      Object.entries(editForm).forEach(([k, v]) => formData.append(k, v));
-      if (editPhotoFile) formData.append('photo', editPhotoFile);
-      const { data } = await $api.put(`/clients/${clientId}`, formData);
-      dispatch(updateClient(data));
-      setClient(data);
+    const formData = new FormData();
+    Object.entries(editForm).forEach(([k, v]) => formData.append(k, v));
+    if (editPhotoFile) formData.append("photo", editPhotoFile);
+    const result = await dispatch(updateClientThunk({ clientId, formData }));
+    if (updateClientThunk.fulfilled.match(result)) {
       setIsEditing(false);
       setEditForm(null);
       setEditPhotoFile(null);
       setEditPhotoPreview(null);
-    } catch (err) {
-      toast(err.response?.data?.error || "Помилка збереження");
+    } else {
+      toast(result.payload || "Помилка збереження");
     }
   }
 
   async function doEnter(subscriptionId) {
-    try {
-      const { data: visit } = await $api.post("/visits/enter", { clientId, subscriptionId });
-      const sub = subscriptionId ? clientSubs.find(s => s.id === subscriptionId) : null;
-      dispatch(clientEnter({
-        ...visit,
-        client: client ? { id: client.id, first_name: client.first_name, last_name: client.last_name, phone: client.phone, photo: client.photo } : null,
-        subscription: sub ? { id: sub.id, label: sub.label, category: sub.category, status: sub.status } : null,
-      }));
-      loadSubs();
-    } catch (err) {
-      toast(err.response?.data?.error || "Помилка входу");
+    const sub = subscriptionId ? clientSubs.find(s => s.id === subscriptionId) : null;
+    const result = await dispatch(enterGymThunk({
+      clientId,
+      subscriptionId,
+      clientData: client
+        ? { id: client.id, first_name: client.first_name, last_name: client.last_name, phone: client.phone, photo: client.photo }
+        : null,
+      subscriptionData: sub
+        ? { id: sub.id, label: sub.label, category: sub.category, status: sub.status }
+        : null,
+    }));
+    if (enterGymThunk.fulfilled.match(result)) {
+      dispatch(fetchClientSubscriptions(clientId));
+    } else {
+      toast(result.payload || "Помилка входу");
     }
   }
 
   async function handleExit() {
     if (!currentVisit) return;
-    try {
-      const { data } = await $api.patch(`/visits/${currentVisit.id}/exit`);
-      dispatch(clientExit({ client_id: clientId, exited_at: data.exited_at }));
-    } catch (err) {
-      toast(err.response?.data?.error || "Помилка виходу");
+    const result = await dispatch(exitGymThunk({ visitId: currentVisit.id, clientId }));
+    if (exitGymThunk.rejected.match(result)) {
+      toast(result.payload || "Помилка виходу");
     }
   }
 
@@ -161,26 +159,26 @@ export default function ClientProfile({ clientId, onClose }) {
   async function handleActivate(id) {
     const ok = await confirm("Активувати абонемент? Почнеться відлік днів.");
     if (!ok) return;
-    try {
-      await $api.patch(`/subscriptions/${id}/activate`);
-      loadSubs();
-    } catch (err) {
-      toast(err.response?.data?.error || "Помилка активації");
+    const result = await dispatch(activateSubscriptionThunk(id));
+    if (activateSubscriptionThunk.fulfilled.match(result)) {
+      dispatch(fetchClientSubscriptions(clientId));
+    } else {
+      toast(result.payload || "Помилка активації");
     }
   }
 
-  async function handleFreeze(id) {
+  function handleFreeze(id) {
     setFreezeSubId(id);
   }
 
   async function handleUnfreeze(id) {
     const ok = await confirm("Розморозити абонемент?");
     if (!ok) return;
-    try {
-      await $api.patch(`/subscriptions/${id}/unfreeze`);
-      loadSubs();
-    } catch (err) {
-      toast(err.response?.data?.error || "Помилка розморозки");
+    const result = await dispatch(unfreezeSubscriptionThunk(id));
+    if (unfreezeSubscriptionThunk.fulfilled.match(result)) {
+      dispatch(fetchClientSubscriptions(clientId));
+    } else {
+      toast(result.payload || "Помилка розморозки");
     }
   }
 
@@ -213,8 +211,7 @@ export default function ClientProfile({ clientId, onClose }) {
 
         {!client ? (
           <div className={styles.notFound}>
-            <p>Клієнта не знайдено</p>
-            <button onClick={onClose}>Закрити</button>
+            <p>Завантаження...</p>
           </div>
         ) : isEditing ? (
           <ClientEditForm
@@ -302,7 +299,10 @@ export default function ClientProfile({ clientId, onClose }) {
       {showAddSub && (
         <AddSubscriptionModal
           clientId={clientId}
-          onClose={() => { setShowAddSub(false); loadSubs(); }}
+          onClose={() => {
+            setShowAddSub(false);
+            dispatch(fetchClientSubscriptions(clientId));
+          }}
         />
       )}
 
@@ -316,7 +316,10 @@ export default function ClientProfile({ clientId, onClose }) {
       {freezeSubId && (
         <FreezeModal
           subscriptionId={freezeSubId}
-          onClose={() => { setFreezeSubId(null); loadSubs(); }}
+          onClose={() => {
+            setFreezeSubId(null);
+            dispatch(fetchClientSubscriptions(clientId));
+          }}
         />
       )}
 

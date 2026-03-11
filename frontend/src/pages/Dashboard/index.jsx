@@ -2,8 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout, gymLogout } from "../../store/slices/authSlice.js";
-import { setVisits, mergeVisits, selectInGym } from "../../store/slices/gymSlice.js";
-import $api from "../../api/http.js";
+import {
+  fetchCurrentVisits,
+  fetchTodayVisits,
+  selectInGym,
+  selectVisitorsToday,
+} from "../../store/slices/gymSlice.js";
 import ClientsTable from "./components/ClientsTable.jsx";
 import TodayVisitors from "./components/TodayVisitors.jsx";
 import PaymentHistory from "./components/PaymentHistory.jsx";
@@ -28,29 +32,22 @@ export default function Dashboard() {
   const currentWorker = useSelector((state) => state.auth.currentWorker);
   const selectedGym = useSelector((state) => state.auth.selectedGym);
   const inGym = useSelector(selectInGym);
+  const visitorsToday = useSelector(selectVisitorsToday);
 
-  // Mount: load only current gym visitors
   useEffect(() => {
-    $api.get("/visits", { params: { inGym: true } })
-      .then(({ data }) => dispatch(setVisits(data)))
-      .catch(console.error);
+    dispatch(fetchCurrentVisits());
   }, [dispatch]);
 
   function handleTabChange(tab) {
     setTableTab(tab);
     if (tab === "today" && !todayLoaded) {
-      const today = new Date().toISOString().split("T")[0];
-      $api.get("/visits", { params: { date: today } })
-        .then(({ data }) => {
-          dispatch(mergeVisits(data));
-          setTodayLoaded(true);
-        })
-        .catch(console.error);
+      dispatch(fetchTodayVisits());
+      setTodayLoaded(true);
     }
   }
 
   function handleLogout() {
-    localStorage.removeItem('access_token');
+    localStorage.removeItem("access_token");
     dispatch(logout());
     navigate("/select-worker");
   }
@@ -86,7 +83,7 @@ export default function Dashboard() {
           </button>
           <button
             className={styles.changeGymBtn}
-            onClick={() => { localStorage.removeItem('access_token'); dispatch(gymLogout()); navigate("/"); }}
+            onClick={() => { localStorage.removeItem("access_token"); dispatch(gymLogout()); navigate("/"); }}
             title="Змінити зал"
           >
             Змінити зал
@@ -127,6 +124,7 @@ export default function Dashboard() {
               onClick={() => handleTabChange("today")}
             >
               Відвідувачі сьогодні
+              <span className={styles.tableTabCount}>{visitorsToday.length}</span>
             </button>
             <button
               className={`${styles.tableTab} ${tableTab === "payments" ? styles.tableTabActive : ""}`}

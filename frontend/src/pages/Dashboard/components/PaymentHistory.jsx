@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import $api from '../../../api/http.js'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchPayments } from '../../../store/slices/paymentsSlice.js'
 import { photoUrl } from '../../../utils/photoUrl.js'
 import Pagination from '../../../components/Pagination.jsx'
 import styles from '../../../styles/dashboard.module.css'
@@ -13,21 +14,13 @@ function formatDateTime(iso) {
 }
 
 export default function PaymentHistory({ onClientSelect }) {
-  const [items, setItems] = useState([])
-  const [total, setTotal] = useState(0)
+  const dispatch = useDispatch()
+  const { items, total, loading } = useSelector(state => state.payments)
   const [page, setPage] = useState(1)
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    setLoading(true)
-    $api.get('/payments', { params: { limit: PER_PAGE, offset: (page - 1) * PER_PAGE } })
-      .then(({ data }) => {
-        setItems(data.items)
-        setTotal(data.total)
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false))
-  }, [page])
+    dispatch(fetchPayments(page))
+  }, [page, dispatch])
 
   const totalPages = Math.ceil(total / PER_PAGE)
 

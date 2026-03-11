@@ -1,22 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
-import $api from '../../../api/http.js'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchPresets, createSubscriptionThunk } from '../../../store/slices/subscriptionsSlice.js'
+import { createPaymentThunk } from '../../../store/slices/paymentsSlice.js'
 import styles from '../../../styles/clientProfile.module.css'
-
-const FALLBACK_PRESETS = [
-  { label: 'Безліміт (1 міс.)', type: 'unlimited', category: 'gym',   duration_days: 30,  price: 1200 },
-  { label: 'Безліміт (3 міс.)', type: 'unlimited', category: 'gym',   duration_days: 90,  price: 3200 },
-  { label: '12 групових занять', type: 'visits',   category: 'group', duration_days: 30,  total_visits: 12, price: 1000 },
-  { label: '20 групових занять', type: 'visits',   category: 'group', duration_days: 30,  total_visits: 20, price: 1600 },
-]
 
 const CATEGORY_LABELS = { gym: 'Спортзал', group: 'Групові заняття' }
 
 export default function AddSubscriptionModal({ clientId, onClose }) {
+  const dispatch = useDispatch()
+  const presets = useSelector(state => state.subscriptions.presets)
 
-  const [presets, setPresets] = useState(FALLBACK_PRESETS)
   const [presetIdx, setPresetIdx] = useState(0)
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [price, setPrice] = useState(FALLBACK_PRESETS[0].price)
+  const [price, setPrice] = useState(presets[0]?.price ?? 0)
   const [method, setMethod] = useState('cash')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -25,16 +21,14 @@ export default function AddSubscriptionModal({ clientId, onClose }) {
   const preset = presets[presetIdx]
 
   useEffect(() => {
-    $api.get('/subscriptions/presets')
-      .then(({ data }) => {
-        if (data.length > 0) {
-          setPresets(data)
-          setPresetIdx(0)
-          setPrice(data[0].price)
-        }
-      })
-      .catch(() => {})
-  }, [])
+    dispatch(fetchPresets())
+  }, [dispatch])
+
+  useEffect(() => {
+    if (presets[presetIdx]) {
+      setPrice(presets[presetIdx].price)
+    }
+  }, [presets, presetIdx])
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -53,34 +47,42 @@ export default function AddSubscriptionModal({ clientId, onClose }) {
   }
 
   async function handleSubmit() {
-    const p = preset
+    if (!preset) return
     setLoading(true)
     setError('')
-    try {
-      const { data: newSub } = await $api.post('/subscriptions', {
-        clientId,
-        type: p.type,
-        category: p.category,
-        label: p.label,
-        totalVisits: p.type === 'visits' ? p.total_visits : null,
-        price: Number(price),
-        durationDays: p.duration_days,
-      })
-      await $api.post('/payments', {
-        clientId,
-        amount: Number(price),
-        type: 'subscription',
-        label: p.label,
-        method,
-      })
 
-      onClose()
-    } catch (err) {
-      setError(err.response?.data?.error || 'Помилка збереження')
-    } finally {
+    const subResult = await dispatch(createSubscriptionThunk({
+      clientId,
+      type: preset.type,
+      category: preset.category,
+      label: preset.label,
+      totalVisits: preset.type === 'visits' ? preset.total_visits : null,
+      price: Number(price),
+      durationDays: preset.duration_days,
+    }))
+    if (createSubscriptionThunk.rejected.match(subResult)) {
+      setError(subResult.payload || 'Помилка збереження')
       setLoading(false)
+      return
     }
+
+    const payResult = await dispatch(createPaymentThunk({
+      clientId,
+      amount: Number(price),
+      type: 'subscription',
+      label: preset.label,
+      method,
+    }))
+    if (createPaymentThunk.rejected.match(payResult)) {
+      setError(payResult.payload || 'Помилка збереження')
+      setLoading(false)
+      return
+    }
+
+    onClose()
   }
+
+  if (!preset) return null
 
   return (
     <div className={styles.subModalOverlay} onClick={e => { e.stopPropagation(); onClose() }}>

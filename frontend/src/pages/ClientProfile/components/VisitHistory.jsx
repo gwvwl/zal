@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
-import $api from '../../../api/http.js'
+import { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchClientVisits } from '../../../store/slices/gymSlice.js'
 import Pagination from '../../../components/Pagination.jsx'
 import styles from '../../../styles/clientProfile.module.css'
 
@@ -21,16 +22,14 @@ function formatDuration(entered_at, exited_at) {
 }
 
 export default function VisitHistory({ clientId }) {
-  const [visits, setVisits] = useState([])
-  const [loading, setLoading] = useState(true)
+  const dispatch = useDispatch()
+  const visits = useSelector(state => state.gym.clientVisits)
+  const loading = useSelector(state => state.gym.clientVisitsLoading)
   const [page, setPage] = useState(1)
 
   useEffect(() => {
-    $api.get('/visits', { params: { clientId } })
-      .then(({ data }) => setVisits(data.sort((a, b) => new Date(b.entered_at) - new Date(a.entered_at))))
-      .catch(console.error)
-      .finally(() => setLoading(false))
-  }, [clientId])
+    dispatch(fetchClientVisits(clientId))
+  }, [clientId, dispatch])
 
   if (loading) return <p className={styles.vhEmpty}>Завантаження...</p>
 

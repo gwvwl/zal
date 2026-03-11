@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import $api from '../../../api/http.js'
+import { useDispatch } from 'react-redux'
+import { freezeSubscriptionThunk } from '../../../store/slices/subscriptionsSlice.js'
 import styles from '../../../styles/clientProfile.module.css'
 
 function addDays(dateStr, days) {
@@ -11,6 +12,7 @@ function addDays(dateStr, days) {
 const today = new Date().toISOString().split('T')[0]
 
 export default function FreezeModal({ subscriptionId, onClose }) {
+  const dispatch = useDispatch()
   const [frozenTo, setFrozenTo] = useState(addDays(today, 7))
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -21,14 +23,13 @@ export default function FreezeModal({ subscriptionId, onClose }) {
       return
     }
     setLoading(true)
-    try {
-      await $api.patch(`/subscriptions/${subscriptionId}/freeze`, { frozenTo })
+    const result = await dispatch(freezeSubscriptionThunk({ subscriptionId, frozenTo }))
+    if (freezeSubscriptionThunk.fulfilled.match(result)) {
       onClose()
-    } catch (err) {
-      setError(err.response?.data?.error || 'Помилка заморозки')
-    } finally {
-      setLoading(false)
+    } else {
+      setError(result.payload || 'Помилка заморозки')
     }
+    setLoading(false)
   }
 
   return (

@@ -1,16 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useDispatch } from 'react-redux'
-import { gymLogin, setToken } from '../../store/slices/authSlice.js'
-import $api from '../../api/http.js'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchGyms, gymLoginThunk } from '../../store/slices/authSlice.js'
 import logo from '../../styles/images/logo.PNG'
 import styles from '../../styles/selectGym.module.css'
 
 export default function SelectGym() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
+  const gyms = useSelector(state => state.auth.gyms)
 
-  const [gyms, setGyms] = useState([])
   const [selectedGymId, setSelectedGymId] = useState(null)
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
@@ -18,27 +17,21 @@ export default function SelectGym() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    $api.get('/gyms').then(({ data }) => setGyms(data)).catch(() => {})
-  }, [])
+    dispatch(fetchGyms())
+  }, [dispatch])
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
     setLoading(true)
-
-    try {
-      const { data } = await $api.post('/auth/gym-login', { gym_id: selectedGymId, password })
-      localStorage.setItem('access_token', data.token)
-      dispatch(setToken(data.token))
-      dispatch(gymLogin({ id: data.gym.id, name: data.gym.name }))
+    const result = await dispatch(gymLoginThunk({ gym_id: selectedGymId, password }))
+    if (gymLoginThunk.fulfilled.match(result)) {
       navigate('/select-worker')
-    } catch (err) {
-      const msg = err.response?.data?.error || 'Невірний пароль'
-      setError(msg)
+    } else {
+      setError(result.payload || 'Невірний пароль')
       setPassword('')
-    } finally {
-      setLoading(false)
     }
+    setLoading(false)
   }
 
   return (

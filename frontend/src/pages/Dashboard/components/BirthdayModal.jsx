@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
-import $api from '../../../api/http.js'
+import { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchBirthdayClients } from '../../../store/slices/clientsSlice.js'
 import styles from '../../../styles/dashboard.module.css'
 import { photoUrl } from '../../../utils/photoUrl'
 
@@ -27,22 +28,19 @@ function calcAge(birthDateStr) {
 }
 
 export default function BirthdayModal({ onClose, onClientSelect }) {
-  const [upcoming, setUpcoming] = useState([])
-  const [loading, setLoading] = useState(true)
+  const dispatch = useDispatch()
+  const birthdayClients = useSelector(state => state.clients.birthdayClients)
+  const loading = useSelector(state => state.clients.birthdayLoading)
 
   useEffect(() => {
-    $api.get('/clients', { params: { limit: 500 } })
-      .then(({ data }) => {
-        const list = data
-          .filter(c => c.birth_date)
-          .map(c => ({ ...c, days: daysUntilBirthday(c.birth_date) }))
-          .filter(c => c.days <= 7)
-          .sort((a, b) => a.days - b.days)
-        setUpcoming(list)
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false))
-  }, [])
+    dispatch(fetchBirthdayClients())
+  }, [dispatch])
+
+  const upcoming = birthdayClients
+    .filter(c => c.birth_date)
+    .map(c => ({ ...c, days: daysUntilBirthday(c.birth_date) }))
+    .filter(c => c.days <= 7)
+    .sort((a, b) => a.days - b.days)
 
   function handleSelect(id) {
     onClose()

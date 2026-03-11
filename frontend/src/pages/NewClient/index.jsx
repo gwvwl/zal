@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react'
 import { useDispatch } from 'react-redux'
-import { addClient } from '../../store/slices/clientsSlice.js'
-import $api from '../../api/http.js'
+import { createClientThunk } from '../../store/slices/clientsSlice.js'
 import styles from '../../styles/newClient.module.css'
 
 const defaultForm = {
@@ -75,18 +74,16 @@ export default function NewClient({ onClose, onCreated }) {
     }
     setLoading(true)
     setApiError('')
-    try {
-      const formData = new FormData()
-      Object.entries(form).forEach(([k, v]) => formData.append(k, v))
-      if (photoFile) formData.append('photo', photoFile)
-      const { data } = await $api.post('/clients', formData)
-      dispatch(addClient(data))
-      onCreated(data.id)
-    } catch (err) {
-      setApiError(err.response?.data?.error || 'Помилка збереження')
-    } finally {
-      setLoading(false)
+    const formData = new FormData()
+    Object.entries(form).forEach(([k, v]) => formData.append(k, v))
+    if (photoFile) formData.append('photo', photoFile)
+    const result = await dispatch(createClientThunk(formData))
+    if (createClientThunk.fulfilled.match(result)) {
+      onCreated(result.payload.id)
+    } else {
+      setApiError(result.payload || 'Помилка збереження')
     }
+    setLoading(false)
   }
 
   return (

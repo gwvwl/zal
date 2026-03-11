@@ -1,8 +1,6 @@
 import { useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
-import { replaceClientCard } from '../../../store/slices/clientsSlice.js'
-import { addPayment } from '../../../store/slices/paymentsSlice.js'
-import $api from '../../../api/http.js'
+import { replaceCardThunk } from '../../../store/slices/clientsSlice.js'
 import styles from '../../../styles/clientProfile.module.css'
 
 export default function ReplaceCardModal({ clientId, onClose }) {
@@ -26,24 +24,20 @@ export default function ReplaceCardModal({ clientId, onClose }) {
     }
     setLoading(true)
     setCardError('')
-    try {
-      const { data } = await $api.post(`/clients/${clientId}/replace-card`, {
-        code: trimmed,
-        paid: isPaid,
-        amount: isPaid ? amount : 0,
-        method: isPaid ? method : 'cash',
-      })
-      dispatch(replaceClientCard({ id: clientId, code: data.client.code }))
-      if (data.payment) {
-        dispatch(addPayment(data.payment))
-      }
+    const result = await dispatch(replaceCardThunk({
+      clientId,
+      code: trimmed,
+      paid: isPaid,
+      amount: isPaid ? amount : 0,
+      method: isPaid ? method : 'cash',
+    }))
+    if (replaceCardThunk.fulfilled.match(result)) {
       onClose()
-    } catch (err) {
-      setCardError(err.response?.data?.error || 'Помилка заміни картки')
+    } else {
+      setCardError(result.payload || 'Помилка заміни картки')
       inputRef.current?.focus()
-    } finally {
-      setLoading(false)
     }
+    setLoading(false)
   }
 
   function handleCardKeyDown(e) {

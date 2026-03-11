@@ -1,17 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useDispatch } from 'react-redux'
-import { login, setToken, gymLogout } from '../../store/slices/authSlice.js'
-import $api from '../../api/http.js'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchWorkers, workerLoginThunk, gymLogout } from '../../store/slices/authSlice.js'
 import logo from '../../styles/images/logo.PNG'
 import styles from '../../styles/selectWorker.module.css'
 
 export default function SelectWorker() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
+  const workers = useSelector(state => state.auth.workers)
+  const workersLoading = useSelector(state => state.auth.workersLoading)
 
-  const [workers, setWorkers] = useState([])
-  const [loadingWorkers, setLoadingWorkers] = useState(true)
   const [selectedId, setSelectedId] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -19,11 +18,8 @@ export default function SelectWorker() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    $api.get('/workers')
-      .then(({ data }) => setWorkers(data))
-      .catch(() => setError('Не вдалося завантажити список співробітників'))
-      .finally(() => setLoadingWorkers(false))
-  }, [])
+    dispatch(fetchWorkers())
+  }, [dispatch])
 
   function handleBack() {
     localStorage.removeItem('access_token')
@@ -35,23 +31,14 @@ export default function SelectWorker() {
     e.preventDefault()
     setError('')
     setLoading(true)
-
-    try {
-      const { data } = await $api.post('/auth/worker-login', {
-        worker_id: selectedId,
-        pin: password,
-      })
-      localStorage.setItem('access_token', data.token)
-      dispatch(setToken(data.token))
-      dispatch(login({ id: data.worker.id, name: data.worker.name, role: data.worker.role }))
+    const result = await dispatch(workerLoginThunk({ worker_id: selectedId, pin: password }))
+    if (workerLoginThunk.fulfilled.match(result)) {
       navigate('/dashboard')
-    } catch (err) {
-      const msg = err.response?.data?.error || 'Невірний пароль'
-      setError(msg)
+    } else {
+      setError(result.payload || 'Невірний пароль')
       setPassword('')
-    } finally {
-      setLoading(false)
     }
+    setLoading(false)
   }
 
   return (
@@ -70,10 +57,10 @@ export default function SelectWorker() {
               className={styles.select}
               value={selectedId}
               onChange={e => { setSelectedId(e.target.value); setError(''); setPassword('') }}
-              disabled={loadingWorkers}
+              disabled={workersLoading}
             >
               <option value="">
-                {loadingWorkers ? 'Завантаження...' : '— Оберіть зі списку —'}
+                {workersLoading ? 'Завантаження...' : '— Оберіть зі списку —'}
               </option>
               {workers.map(w => (
                 <option key={w.id} value={w.id}>

@@ -1,33 +1,27 @@
 import { useState, useEffect, useRef } from 'react'
-import $api from '../../../api/http.js'
+import { useDispatch, useSelector } from 'react-redux'
+import { searchClients, clearSearch } from '../../../store/slices/clientsSlice.js'
 import styles from '../../../styles/dashboard.module.css'
 
 export default function SearchModal({ onClose, onClientSelect }) {
+  const dispatch = useDispatch()
+  const results = useSelector(state => state.clients.searchResults)
+  const loading = useSelector(state => state.clients.searchLoading)
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState([])
-  const [loading, setLoading] = useState(false)
   const timerRef = useRef(null)
 
   useEffect(() => {
     const q = query.trim()
     if (q.length < 2) {
-      setResults([])
+      dispatch(clearSearch())
       return
     }
     clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(async () => {
-      setLoading(true)
-      try {
-        const { data } = await $api.get('/clients', { params: { q } })
-        setResults(data)
-      } catch {
-        setResults([])
-      } finally {
-        setLoading(false)
-      }
+    timerRef.current = setTimeout(() => {
+      dispatch(searchClients(q))
     }, 300)
     return () => clearTimeout(timerRef.current)
-  }, [query])
+  }, [query, dispatch])
 
   function handleSelect(client) {
     onClientSelect(client.id)

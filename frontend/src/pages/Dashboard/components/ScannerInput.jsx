@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import $api from '../../../api/http.js'
+import { useDispatch } from 'react-redux'
+import { fetchClientByCode } from '../../../store/slices/clientsSlice.js'
 import styles from '../../../styles/dashboard.module.css'
 
 export default function ScannerInput({ onClientSelect }) {
+  const dispatch = useDispatch()
   const [isListening, setIsListening] = useState(false)
   const bufferRef = useRef('')
   const lastKeyTime = useRef(0)
@@ -48,12 +50,11 @@ export default function ScannerInput({ onClientSelect }) {
 
   async function handleScannedCode(code) {
     setIsListening(false)
-    try {
-      const { data } = await $api.get(`/clients/by-code/${encodeURIComponent(code)}`)
-      onClientSelect && onClientSelect(data.id)
-    } catch (err) {
-      const msg = err.response?.data?.error || `Клієнта з кодом "${code}" не знайдено`
-      alert(msg)
+    const result = await dispatch(fetchClientByCode(code))
+    if (fetchClientByCode.fulfilled.match(result)) {
+      onClientSelect && onClientSelect(result.payload.id)
+    } else {
+      alert(result.payload || `Клієнта з кодом "${code}" не знайдено`)
     }
   }
 
