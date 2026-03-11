@@ -1,0 +1,159 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #dbeafe 0%, #f0f9ff 50%, #eff6ff 100%);
+}
+
+.card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 48px 56px;
+  box-shadow: 0 20px 60px rgba(37, 99, 235, 0.15);
+  width: 100%;
+  max-width: 460px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.logoIcon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.logoImg {
+  height: 64px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 12px;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  color: var(--gray-500);
+  font-size: 14px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-600);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.select,
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius);
+  font-size: 15px;
+  color: var(--gray-900);
+  background: #fff;
+  outline: none;
+  transition: border-color 0.2s;
+  appearance: none;
+}
+
+.select:focus,
+.input:focus {
+  border-color: var(--primary);
+}
+
+.passWrap {
+  position: relative;
+}
+
+.passWrap .input {
+  padding-right: 44px;
+}
+
+.eyeBtn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 18px;
+  padding: 4px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.eyeBtn:hover {
+  opacity: 1;
+}
+
+.error {
+  background: var(--danger-light);
+  color: var(--danger);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.btn {
+  padding: 14px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 4px;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  background: var(--gray-300);
+  cursor: not-allowed;
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  color: var(--gray-500);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 0;
+  text-align: center;
+  transition: color 0.2s;
+}
+
+.backBtn:hover {
+  color: var(--gray-900);
+}

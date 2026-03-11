@@ -1,0 +1,8 @@
+.DS_Store
+1c-export-docs.md
+*.md
+node_modules/
+uploads/
+.env
+export_1c.json
+.claude
