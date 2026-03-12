@@ -69,7 +69,6 @@ export default function Layout() {
           ))}
         </nav>
         <div className={styles.sidebarFooter}>
-          <div className={styles.adminName}>{adminData.name || "Admin"}</div>
           <button className={styles.logoutBtn} onClick={handleLogout}>
             Вийти
           </button>
