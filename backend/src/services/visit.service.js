@@ -213,4 +213,38 @@ const exit = async (gymId, visitId) => {
   return visit;
 };
 
-module.exports = { getAll, enter, enterByCode, singleEntry, exit };
+const GROUP_CATEGORIES = ['group', 'mma', 'sambo', 'grappling', 'stretching', 'boxing', 'karate'];
+
+const getGroupReport = async (gymId, date) => {
+  const start = new Date(date);
+  const end = new Date(date);
+  end.setDate(end.getDate() + 1);
+
+  const visits = await Visit.findAll({
+    where: {
+      gym_id: gymId,
+      entered_at: { [Op.gte]: start, [Op.lt]: end },
+      subscription_id: { [Op.ne]: null },
+    },
+    include: [
+      { model: Client, as: 'client', attributes: ['id', 'first_name', 'last_name', 'phone', 'photo'] },
+      { model: Subscription, as: 'subscription', attributes: ['id', 'label', 'category'] },
+    ],
+    order: [['entered_at', 'ASC']],
+  });
+
+  const grouped = {};
+  for (const visit of visits) {
+    const cat = visit.subscription?.category;
+    if (!cat || !GROUP_CATEGORIES.includes(cat)) continue;
+    if (!grouped[cat]) grouped[cat] = { category: cat, clients: [] };
+    // avoid duplicate client in same category same day
+    if (!grouped[cat].clients.find(c => c.id === visit.client.id)) {
+      grouped[cat].clients.push(visit.client);
+    }
+  }
+
+  return Object.values(grouped).sort((a, b) => b.clients.length - a.clients.length);
+};
+
+module.exports = { getAll, enter, enterByCode, singleEntry, exit, getGroupReport };

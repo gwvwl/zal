@@ -62,4 +62,15 @@ const exit = async (req, res, next) => {
   }
 };
 
-module.exports = { getAll, enter, enterByCode, singleEntry, exit };
+const getGroupReport = async (req, res, next) => {
+  try {
+    const { date } = req.query;
+    if (!date) return res.status(400).json({ error: 'date є обов\'язковим' });
+    const data = await visitService.getGroupReport(req.auth.gym_id, date);
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { getAll, enter, enterByCode, singleEntry, exit, getGroupReport };

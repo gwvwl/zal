@@ -14,6 +14,7 @@ import PaymentHistory from "./components/PaymentHistory.jsx";
 import ScannerInput from "./components/ScannerInput.jsx";
 import SearchModal from "./components/SearchModal.jsx";
 import BirthdayModal from "./components/BirthdayModal.jsx";
+import GroupReportModal from "./components/GroupReportModal.jsx";
 import NewClient from "../NewClient/index.jsx";
 import ClientProfile from "../ClientProfile/index.jsx";
 import logo from "../../styles/images/logo.PNG";
@@ -25,6 +26,7 @@ export default function Dashboard() {
   const [showSearch, setShowSearch] = useState(false);
   const [showNewClient, setShowNewClient] = useState(false);
   const [showBirthdays, setShowBirthdays] = useState(false);
+  const [showGroupReport, setShowGroupReport] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [tableTab, setTableTab] = useState("inGym");
   const [todayLoaded, setTodayLoaded] = useState(false);
@@ -70,6 +72,13 @@ export default function Dashboard() {
           </div>
         </div>
         <div className={styles.headerRight}>
+          <button
+            className={styles.bdBtn}
+            onClick={() => setShowGroupReport(true)}
+            title="Групові заняття"
+          >
+            👥
+          </button>
           <button
             className={styles.bdBtn}
             onClick={() => setShowBirthdays(true)}
@@ -142,6 +151,13 @@ export default function Dashboard() {
       {showSearch && (
         <SearchModal
           onClose={() => setShowSearch(false)}
+          onClientSelect={handleClientSelect}
+        />
+      )}
+
+      {showGroupReport && (
+        <GroupReportModal
+          onClose={() => setShowGroupReport(false)}
           onClientSelect={handleClientSelect}
         />
       )}

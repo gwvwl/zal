@@ -10,6 +10,7 @@ const entryLimiter = rateLimit({
 });
 
 router.get('/', requireWorker, visitController.getAll);
+router.get('/group-report', requireWorker, visitController.getGroupReport);
 router.post('/enter', requireWorker, entryLimiter, visitController.enter);
 router.post('/enter-by-code', requireWorker, entryLimiter, visitController.enterByCode);
 router.post('/single-entry', requireWorker, entryLimiter, visitController.singleEntry);
