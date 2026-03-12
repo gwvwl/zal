@@ -3,6 +3,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const errorHandler = require('./middlewares/errorHandler');
+const requestLogger = require('./middlewares/requestLogger');
 
 const authRoutes = require('./routes/auth.routes');
 const gymRoutes = require('./routes/gym.routes');
@@ -22,6 +23,7 @@ app.use(cors({
   ],
   credentials: true,
 }));
+app.use(requestLogger);
 app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
