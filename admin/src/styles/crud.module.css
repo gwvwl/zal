@@ -29,11 +29,12 @@
   background: #fff;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
-  overflow: hidden;
+  overflow-x: auto;
 }
 
 .table {
   width: 100%;
+  min-width: 800px;
   border-collapse: collapse;
 }
 
@@ -43,19 +44,21 @@
 }
 
 .table th {
-  padding: 12px 16px;
+  padding: 10px 12px;
   text-align: left;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--gray-500);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .table td {
-  padding: 14px 16px;
+  padding: 10px 12px;
   vertical-align: middle;
   border-bottom: 1px solid var(--gray-100);
+  white-space: nowrap;
 }
 
 .table tr:last-child td {
@@ -145,6 +148,51 @@
 .badgeGroup {
   background: #fef3c7;
   color: #92400e;
+}
+
+.badgeMma {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.badgeSambo {
+  background: #fde68a;
+  color: #78350f;
+}
+
+.badgeGrappling {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.badgeStretching {
+  background: #fce7f3;
+  color: #9d174d;
+}
+
+.badgeBoxing {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.badgeKarate {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badgeLocker {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.badgeRental {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.badgeSingle {
+  background: #f0fdf4;
+  color: #166534;
 }
 
 /* ── Modal ── */
@@ -351,7 +399,7 @@
   }
 
   .table {
-    min-width: 600px;
+    min-width: 900px;
   }
 
   .filtersBar {

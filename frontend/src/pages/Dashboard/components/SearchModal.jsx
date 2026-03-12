@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { searchClients, clearSearch } from '../../../store/slices/clientsSlice.js'
+import { photoUrl } from '../../../utils/photoUrl.js'
 import styles from '../../../styles/dashboard.module.css'
 
 export default function SearchModal({ onClose, onClientSelect }) {
@@ -59,7 +60,10 @@ export default function SearchModal({ onClose, onClientSelect }) {
               onClick={() => handleSelect(client)}
             >
               <div className={styles.smAvatar}>
-                {client.first_name?.[0]}{client.last_name?.[0]}
+                {client.photo
+                  ? <img src={photoUrl(client.photo)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                  : <>{client.first_name?.[0]}{client.last_name?.[0]}</>
+                }
               </div>
               <div className={styles.smInfo}>
                 <span className={styles.smName}>

@@ -4,5 +4,5 @@
 node_modules/
 uploads/
 .env
-export_1c.json
+*export_1c.json
 .claude

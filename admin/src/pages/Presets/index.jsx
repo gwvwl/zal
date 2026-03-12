@@ -5,7 +5,34 @@ import { useConfirm } from '../../components/ConfirmDialog.jsx'
 import s from '../../styles/crud.module.css'
 
 const TYPE_LABELS = { unlimited: 'Безлімітний', visits: 'За відвідуваннями' }
-const CATEGORY_LABELS = { gym: 'Спортзал', group: 'Групові' }
+
+const CATEGORY_LABELS = {
+  gym:        'Спортзал',
+  group:      'Групові',
+  mma:        'ММА',
+  sambo:      'Самбо',
+  grappling:  'Грепплінг',
+  stretching: 'Стретчинг',
+  boxing:     'Бокс',
+  karate:     'Карате',
+  locker:     'Ящик',
+  rental:     'Оренда',
+  single:     'Разовий',
+}
+
+const CATEGORY_BADGE = {
+  gym:        'badgeGym',
+  group:      'badgeGroup',
+  mma:        'badgeMma',
+  sambo:      'badgeSambo',
+  grappling:  'badgeGrappling',
+  stretching: 'badgeStretching',
+  boxing:     'badgeBoxing',
+  karate:     'badgeKarate',
+  locker:     'badgeLocker',
+  rental:     'badgeRental',
+  single:     'badgeSingle',
+}
 
 export default function Presets() {
   const toast = useToast()
@@ -89,12 +116,13 @@ export default function Presets() {
                 <th>Назва</th>
                 <th>Тип</th>
                 <th>Категорія</th>
-                <th>Днів</th>
-                <th>Візити</th>
-                <th>Ціна</th>
+                <th style={{ width: 60 }}>Днів</th>
+                <th style={{ width: 70 }}>Візити</th>
+                <th style={{ width: 80 }}>Ціна</th>
                 <th>Зал</th>
-                <th>Статус</th>
-                <th style={{ width: 140 }}>Дії</th>
+                <th style={{ width: 60 }}>Мульти</th>
+                <th style={{ width: 90 }}>Статус</th>
+                <th style={{ width: 120 }}>Дії</th>
               </tr>
             </thead>
             <tbody>
@@ -103,14 +131,19 @@ export default function Presets() {
                   <td style={{ fontWeight: 600 }}>{p.label}</td>
                   <td>{TYPE_LABELS[p.type] || p.type}</td>
                   <td>
-                    <span className={`${s.badge} ${p.category === 'gym' ? s.badgeGym : s.badgeGroup}`}>
+                    <span className={`${s.badge} ${s[CATEGORY_BADGE[p.category]] || s.badgeGroup}`}>
                       {CATEGORY_LABELS[p.category] || p.category}
                     </span>
                   </td>
                   <td>{p.duration_days}</td>
                   <td>{p.total_visits || '—'}</td>
-                  <td style={{ fontWeight: 600 }}>{p.price} грн</td>
+                  <td style={{ fontWeight: 600 }}>{Number(p.price)} грн</td>
                   <td>{gymName(p.gym_id)}</td>
+                  <td>
+                    {p.multi_gym && (
+                      <span className={`${s.badge} ${s.badgeGym}`}>Так</span>
+                    )}
+                  </td>
                   <td>
                     <span className={`${s.badge} ${p.is_active ? s.badgeActive : s.badgeInactive}`}>
                       {p.is_active ? 'Активний' : 'Вимкнено'}
@@ -155,6 +188,7 @@ function PresetModal({ mode, initial, gyms, onSave, onClose }) {
   const [totalVisits, setTotalVisits] = useState(initial.total_visits || '')
   const [gymId, setGymId] = useState(initial.gym_id || gyms[0]?.id || '')
   const [isActive, setIsActive] = useState(initial.is_active !== false)
+  const [multiGym, setMultiGym] = useState(initial.multi_gym || false)
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -165,6 +199,7 @@ function PresetModal({ mode, initial, gyms, onSave, onClose }) {
       duration_days: Number(durationDays),
       price: Number(price),
       is_active: isActive,
+      multi_gym: multiGym,
     }
     if (mode === 'create') data.gym_id = gymId
     if (type === 'visits') data.total_visits = Number(totalVisits)
@@ -196,7 +231,16 @@ function PresetModal({ mode, initial, gyms, onSave, onClose }) {
                 <label className={s.label}>Категорія</label>
                 <select className={s.select} value={category} onChange={e => setCategory(e.target.value)}>
                   <option value="gym">Спортзал</option>
-                  <option value="group">Групові заняття</option>
+                  <option value="group">Групові</option>
+                  <option value="mma">ММА</option>
+                  <option value="sambo">Самбо</option>
+                  <option value="grappling">Грепплінг</option>
+                  <option value="stretching">Стретчинг</option>
+                  <option value="boxing">Бокс</option>
+                  <option value="karate">Карате</option>
+                  <option value="locker">Ящик</option>
+                  <option value="rental">Оренда</option>
+                  <option value="single">Разовий</option>
                 </select>
               </div>
             </div>
@@ -224,6 +268,12 @@ function PresetModal({ mode, initial, gyms, onSave, onClose }) {
                 </select>
               </div>
             )}
+            <div className={s.field}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                <input type="checkbox" checked={multiGym} onChange={e => setMultiGym(e.target.checked)} />
+                <span className={s.label} style={{ margin: 0 }}>Мульти-зал (діє в усіх залах)</span>
+              </label>
+            </div>
             {mode === 'edit' && (
               <div className={s.field}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>

@@ -44,6 +44,8 @@ export default function ClientProfile({ clientId, onClose }) {
   const [showAddSub, setShowAddSub] = useState(false);
   const [showReplaceCard, setShowReplaceCard] = useState(false);
   const [freezeSubId, setFreezeSubId] = useState(null);
+  const [commentEdit, setCommentEdit] = useState(false);
+  const [commentValue, setCommentValue] = useState('');
 
   const client = useSelector(state => state.clients.currentClient);
   const clientSubs = useSelector(state => state.subscriptions.clientSubs);
@@ -65,6 +67,10 @@ export default function ClientProfile({ clientId, onClose }) {
     dispatch(fetchClient(clientId));
     dispatch(fetchClientSubscriptions(clientId));
   }, [clientId, dispatch]);
+
+  useEffect(() => {
+    if (client) setCommentValue(client.comment || '');
+  }, [client]);
 
   function startEdit() {
     setEditForm({
@@ -156,6 +162,21 @@ export default function ClientProfile({ clientId, onClose }) {
     toast("Разовий вхід — буде реалізовано пізніше");
   }
 
+  async function handleSaveComment() {
+    const formData = new FormData();
+    formData.append('lastName', client.last_name || '');
+    formData.append('firstName', client.first_name || '');
+    formData.append('middleName', client.middle_name || '');
+    formData.append('phone', client.phone || '');
+    formData.append('email', client.email || '');
+    formData.append('birthDate', client.birth_date || '');
+    formData.append('gender', client.gender || '');
+    formData.append('source', client.source || '');
+    formData.append('comment', commentValue);
+    await dispatch(updateClientThunk({ clientId, formData }));
+    setCommentEdit(false);
+  }
+
   async function handleActivate(id) {
     const ok = await confirm("Активувати абонемент? Почнеться відлік днів.");
     if (!ok) return;
@@ -232,6 +253,38 @@ export default function ClientProfile({ clientId, onClose }) {
                   client={client}
                   onPhotoClick={() => setShowPhotoLightbox(true)}
                 />
+                {!commentEdit ? (
+                  <div
+                    className={styles.infoCard}
+                    onClick={() => setCommentEdit(true)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className={styles.infoRow}>
+                      <span className={styles.infoLabel}>Коментар</span>
+                      <span className={styles.infoValue} style={{ color: commentValue ? undefined : 'var(--gray-400)' }}>
+                        {commentValue || 'Додати коментар...'}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={styles.commentBlock}>
+                    <textarea
+                      className={styles.commentTextarea}
+                      rows={2}
+                      value={commentValue}
+                      autoFocus
+                      onFocus={e => { const len = e.target.value.length; e.target.setSelectionRange(len, len) }}
+                      onChange={e => setCommentValue(e.target.value)}
+                    />
+                    <div className={styles.commentActions}>
+                      <button className={styles.commentCancelBtn} onClick={() => {
+                        setCommentValue(client.comment || '');
+                        setCommentEdit(false);
+                      }}>Скасувати</button>
+                      <button className={styles.commentSaveBtn} onClick={handleSaveComment}>Зберегти</button>
+                    </div>
+                  </div>
+                )}
                 <div className={styles.subActions}>
                   <button className={styles.subBtnPrimary} onClick={() => setShowAddSub(true)}>
                     Додати абонемент

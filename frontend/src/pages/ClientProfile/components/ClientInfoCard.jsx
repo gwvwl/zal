@@ -54,14 +54,6 @@ export default function ClientInfoCard({ client, onPhotoClick }) {
         </div>
       </div>
 
-      {client.comment && (
-        <div className={styles.infoCard}>
-          <div className={styles.infoRow}>
-            <span className={styles.infoLabel}>Коментар</span>
-            <span className={styles.infoValue}>{client.comment}</span>
-          </div>
-        </div>
-      )}
     </>
   )
 }

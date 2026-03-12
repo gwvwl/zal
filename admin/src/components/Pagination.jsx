@@ -1,14 +1,14 @@
-import styles from '../styles/pagination.module.css'
+import styles from "../styles/pagination.module.css";
 
 export default function Pagination({ page, totalPages, onPageChange }) {
-  if (totalPages <= 1) return null
+  if (totalPages <= 1) return null;
 
-  const pages = []
+  const pages = [];
   for (let i = 1; i <= totalPages; i++) {
     if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
-      pages.push(i)
-    } else if (pages[pages.length - 1] !== '...') {
-      pages.push('...')
+      pages.push(i);
+    } else if (pages[pages.length - 1] !== "...") {
+      pages.push("...");
     }
   }
 
@@ -21,18 +21,20 @@ export default function Pagination({ page, totalPages, onPageChange }) {
       >
         &laquo;
       </button>
-      {pages.map((p, i) =>
-        p === '...' ? (
-          <span key={`dots-${i}`} className={styles.dots}>...</span>
+      {pages?.map((p, i) =>
+        p === "..." ? (
+          <span key={`dots-${i}`} className={styles.dots}>
+            ...
+          </span>
         ) : (
           <button
             key={p}
-            className={`${styles.btn} ${p === page ? styles.active : ''}`}
+            className={`${styles.btn} ${p === page ? styles.active : ""}`}
             onClick={() => onPageChange(p)}
           >
             {p}
           </button>
-        )
+        ),
       )}
       <button
         className={styles.btn}
@@ -42,5 +44,5 @@ export default function Pagination({ page, totalPages, onPageChange }) {
         &raquo;
       </button>
     </div>
-  )
+  );
 }

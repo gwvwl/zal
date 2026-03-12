@@ -1,31 +1,31 @@
-import { useState } from 'react'
-import { useSelector } from 'react-redux'
-import { selectInGym } from '../../../store/slices/gymSlice.js'
-import { photoUrl } from '../../../utils/photoUrl.js'
-import Pagination from '../../../components/Pagination.jsx'
-import styles from '../../../styles/dashboard.module.css'
+import { useState } from "react";
+import { useSelector } from "react-redux";
+import { selectInGym } from "../../../store/slices/gymSlice.js";
+import { photoUrl } from "../../../utils/photoUrl.js";
+import Pagination from "../../../components/Pagination.jsx";
+import styles from "../../../styles/dashboard.module.css";
 
-const PER_PAGE = 15
+const PER_PAGE = 15;
 
 function formatTime(isoString) {
-  const d = new Date(isoString)
-  return d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })
+  const d = new Date(isoString);
+  return d.toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
 }
 
 function formatDuration(isoString) {
-  const diff = Date.now() - new Date(isoString).getTime()
-  const totalMin = Math.floor(diff / 60000)
-  const h = Math.floor(totalMin / 60)
-  const m = totalMin % 60
-  if (h > 0) return `${h}г ${m}хв`
-  return `${m}хв`
+  const diff = Date.now() - new Date(isoString).getTime();
+  const totalMin = Math.floor(diff / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h > 0) return `${h}г ${m}хв`;
+  return `${m}хв`;
 }
 
 export default function ClientsTable({ onClientSelect }) {
-  const inGym = useSelector(selectInGym)
-  const [page, setPage] = useState(1)
+  const inGym = useSelector(selectInGym);
+  const [page, setPage] = useState(1);
 
-  const rows = inGym.filter(v => v.client)
+  const rows = inGym.filter((v) => v.client);
 
   if (rows.length === 0) {
     return (
@@ -33,11 +33,11 @@ export default function ClientsTable({ onClientSelect }) {
         <span className={styles.ctEmptyIcon}>🏃</span>
         <p>Зараз у залі нікого немає</p>
       </div>
-    )
+    );
   }
 
-  const totalPages = Math.ceil(rows.length / PER_PAGE)
-  const pageRows = rows.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+  const totalPages = Math.ceil(rows.length / PER_PAGE);
+  const pageRows = rows.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   return (
     <div className={styles.ctTableWrap}>
@@ -52,23 +52,30 @@ export default function ClientsTable({ onClientSelect }) {
           </tr>
         </thead>
         <tbody>
-          {pageRows.map((visit, idx) => {
-            const client = visit.client
-            const sub = visit.subscription
+          {pageRows?.map((visit, idx) => {
+            const client = visit.client;
+            const sub = visit.subscription;
             return (
               <tr
                 key={visit.id}
                 className={styles.ctRow}
                 onClick={() => onClientSelect(client.id)}
               >
-                <td className={styles.ctNum}>{(page - 1) * PER_PAGE + idx + 1}</td>
+                <td className={styles.ctNum}>
+                  {(page - 1) * PER_PAGE + idx + 1}
+                </td>
                 <td>
                   <div className={styles.ctClientCell}>
                     {client.photo ? (
-                      <img src={photoUrl(client.photo)} alt="" className={styles.ctAvatarImg} />
+                      <img
+                        src={photoUrl(client.photo)}
+                        alt=""
+                        className={styles.ctAvatarImg}
+                      />
                     ) : (
                       <div className={styles.ctAvatar}>
-                        {client.first_name?.[0]}{client.last_name?.[0]}
+                        {client.first_name?.[0]}
+                        {client.last_name?.[0]}
                       </div>
                     )}
                     <div>
@@ -81,8 +88,10 @@ export default function ClientsTable({ onClientSelect }) {
                 </td>
                 <td>
                   {sub ? (
-                    <span className={`${styles.ctBadge} ${sub.status === 'frozen' ? styles.ctBadgeFrozen : styles.ctBadgeActive}`}>
-                      {sub.status === 'frozen' ? '❄️ Заморожений' : sub.label}
+                    <span
+                      className={`${styles.ctBadge} ${sub.status === "frozen" ? styles.ctBadgeFrozen : styles.ctBadgeActive}`}
+                    >
+                      {sub.status === "frozen" ? "❄️ Заморожений" : sub.label}
                     </span>
                   ) : (
                     <span className={`${styles.ctBadge} ${styles.ctBadgeNone}`}>
@@ -90,14 +99,18 @@ export default function ClientsTable({ onClientSelect }) {
                     </span>
                   )}
                 </td>
-                <td className={styles.ctTime}>{formatTime(visit.entered_at)}</td>
-                <td className={styles.ctDuration}>{formatDuration(visit.entered_at)}</td>
+                <td className={styles.ctTime}>
+                  {formatTime(visit.entered_at)}
+                </td>
+                <td className={styles.ctDuration}>
+                  {formatDuration(visit.entered_at)}
+                </td>
               </tr>
-            )
+            );
           })}
         </tbody>
       </table>
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
-  )
+  );
 }

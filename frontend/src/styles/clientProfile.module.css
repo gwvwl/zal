@@ -771,6 +771,70 @@
   white-space: nowrap;
 }
 
+.commentBlock {
+  padding: 12px 20px;
+  border-top: 1px solid var(--gray-100);
+}
+
+.commentLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--gray-400);
+  margin-bottom: 6px;
+}
+
+.commentTextarea {
+  width: 100%;
+  resize: none;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--gray-800);
+  line-height: 1.5;
+  outline: none;
+  background: var(--gray-50);
+  box-sizing: border-box;
+  transition: border-color 0.2s, background 0.2s;
+  font-family: inherit;
+}
+
+.commentTextarea:focus {
+  border-color: var(--primary);
+  background: #fff;
+}
+
+.commentActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.commentSaveBtn {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.commentCancelBtn {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #fff;
+  color: var(--gray-600);
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
 .subActions {
   display: flex;
   gap: 10px;
@@ -882,7 +946,6 @@
   width: 100%;
   max-width: 520px;
   box-shadow: var(--shadow-lg);
-  overflow: hidden;
 }
 
 .subModalSm {
@@ -1028,9 +1091,29 @@
   border: 1.5px solid var(--gray-200);
   border-radius: var(--radius);
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-  z-index: 10;
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+}
+
+.subDropdownSearch {
+  padding: 8px 10px;
+  border: none;
+  border-bottom: 1px solid var(--gray-100);
+  font-size: 14px;
+  color: var(--gray-900);
+  outline: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--gray-50);
+}
+
+.subDropdownSearch::placeholder {
+  color: var(--gray-400);
+}
+
+.subDropdownList {
   overflow-y: auto;
-  max-height: 260px;
+  max-height: 220px;
 }
 
 .subDropdownOption {
@@ -1643,4 +1726,19 @@
   font-weight: 600;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+/* ── Locker card ── */
+.subCardLocker {
+  background: #fffbeb;
+  border: 1.5px solid #fcd34d;
+}
+
+.subSelectorLocker {
+  border-color: #fcd34d;
+  background: #fffbeb;
+}
+
+.subSelectorOptionLocker {
+  background: #fffdf0;
 }

@@ -1,37 +1,39 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useDispatch, useSelector } from 'react-redux'
-import { fetchGyms, gymLoginThunk } from '../../store/slices/authSlice.js'
-import logo from '../../styles/images/logo.PNG'
-import styles from '../../styles/selectGym.module.css'
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchGyms, gymLoginThunk } from "../../store/slices/authSlice.js";
+import logo from "../../styles/images/logo.PNG";
+import styles from "../../styles/selectGym.module.css";
 
 export default function SelectGym() {
-  const navigate = useNavigate()
-  const dispatch = useDispatch()
-  const gyms = useSelector(state => state.auth.gyms)
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const gyms = useSelector((state) => state.auth.gyms);
 
-  const [selectedGymId, setSelectedGymId] = useState(null)
-  const [password, setPassword] = useState('')
-  const [showPass, setShowPass] = useState(false)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [selectedGymId, setSelectedGymId] = useState(null);
+  const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchGyms())
-  }, [dispatch])
+    dispatch(fetchGyms());
+  }, [dispatch]);
 
   async function handleSubmit(e) {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-    const result = await dispatch(gymLoginThunk({ gym_id: selectedGymId, password }))
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    const result = await dispatch(
+      gymLoginThunk({ gym_id: selectedGymId, password }),
+    );
     if (gymLoginThunk.fulfilled.match(result)) {
-      navigate('/select-worker')
+      navigate("/select-worker");
     } else {
-      setError(result.payload || 'Невірний пароль')
-      setPassword('')
+      setError(result.payload || "Невірний пароль");
+      setPassword("");
     }
-    setLoading(false)
+    setLoading(false);
   }
 
   return (
@@ -44,12 +46,15 @@ export default function SelectGym() {
         </div>
 
         <div className={styles.gymGrid}>
-          {gyms.map(gym => (
+          {gyms?.map((gym) => (
             <button
               key={gym.id}
               type="button"
-              className={`${styles.gymCard} ${selectedGymId === gym.id ? styles.gymCardActive : ''}`}
-              onClick={() => { setSelectedGymId(gym.id); setError('') }}
+              className={`${styles.gymCard} ${selectedGymId === gym.id ? styles.gymCardActive : ""}`}
+              onClick={() => {
+                setSelectedGymId(gym.id);
+                setError("");
+              }}
             >
               <span className={styles.gymCardIcon}>🏋️</span>
               <span className={styles.gymCardName}>{gym.name}</span>
@@ -63,19 +68,22 @@ export default function SelectGym() {
             <div className={styles.passWrap}>
               <input
                 className={styles.input}
-                type={showPass ? 'text' : 'password'}
+                type={showPass ? "text" : "password"}
                 value={password}
-                onChange={e => { setPassword(e.target.value); setError('') }}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError("");
+                }}
                 placeholder="Введіть пароль"
                 autoComplete="current-password"
               />
               <button
                 type="button"
                 className={styles.eyeBtn}
-                onClick={() => setShowPass(v => !v)}
+                onClick={() => setShowPass((v) => !v)}
                 tabIndex={-1}
               >
-                {showPass ? '🙈' : '👁️'}
+                {showPass ? "🙈" : "👁️"}
               </button>
             </div>
           </div>
@@ -87,10 +95,10 @@ export default function SelectGym() {
             type="submit"
             disabled={!selectedGymId || !password || loading}
           >
-            {loading ? 'Вхід...' : 'Увійти'}
+            {loading ? "Вхід..." : "Увійти"}
           </button>
         </form>
       </div>
     </div>
-  )
+  );
 }

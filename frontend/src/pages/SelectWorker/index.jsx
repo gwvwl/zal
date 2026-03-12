@@ -1,44 +1,50 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useDispatch, useSelector } from 'react-redux'
-import { fetchWorkers, workerLoginThunk, gymLogout } from '../../store/slices/authSlice.js'
-import logo from '../../styles/images/logo.PNG'
-import styles from '../../styles/selectWorker.module.css'
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchWorkers,
+  workerLoginThunk,
+  gymLogout,
+} from "../../store/slices/authSlice.js";
+import logo from "../../styles/images/logo.PNG";
+import styles from "../../styles/selectWorker.module.css";
 
 export default function SelectWorker() {
-  const navigate = useNavigate()
-  const dispatch = useDispatch()
-  const workers = useSelector(state => state.auth.workers)
-  const workersLoading = useSelector(state => state.auth.workersLoading)
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const workers = useSelector((state) => state.auth.workers);
+  const workersLoading = useSelector((state) => state.auth.workersLoading);
 
-  const [selectedId, setSelectedId] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [showPass, setShowPass] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [selectedId, setSelectedId] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchWorkers())
-  }, [dispatch])
+    dispatch(fetchWorkers());
+  }, [dispatch]);
 
   function handleBack() {
-    localStorage.removeItem('access_token')
-    dispatch(gymLogout())
-    navigate('/')
+    localStorage.removeItem("access_token");
+    dispatch(gymLogout());
+    navigate("/");
   }
 
   async function handleSubmit(e) {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-    const result = await dispatch(workerLoginThunk({ worker_id: selectedId, pin: password }))
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    const result = await dispatch(
+      workerLoginThunk({ worker_id: selectedId, pin: password }),
+    );
     if (workerLoginThunk.fulfilled.match(result)) {
-      navigate('/dashboard')
+      navigate("/dashboard");
     } else {
-      setError(result.payload || 'Невірний пароль')
-      setPassword('')
+      setError(result.payload || "Невірний пароль");
+      setPassword("");
     }
-    setLoading(false)
+    setLoading(false);
   }
 
   return (
@@ -47,7 +53,9 @@ export default function SelectWorker() {
         <div className={styles.header}>
           <img src={logo} alt="Зал" className={styles.logoImg} />
           <h1 className={styles.title}>CRM</h1>
-          <p className={styles.subtitle}>Оберіть співробітника та введіть пароль</p>
+          <p className={styles.subtitle}>
+            Оберіть співробітника та введіть пароль
+          </p>
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit}>
@@ -56,13 +64,17 @@ export default function SelectWorker() {
             <select
               className={styles.select}
               value={selectedId}
-              onChange={e => { setSelectedId(e.target.value); setError(''); setPassword('') }}
+              onChange={(e) => {
+                setSelectedId(e.target.value);
+                setError("");
+                setPassword("");
+              }}
               disabled={workersLoading}
             >
               <option value="">
-                {workersLoading ? 'Завантаження...' : '— Оберіть зі списку —'}
+                {workersLoading ? "Завантаження..." : "— Оберіть зі списку —"}
               </option>
-              {workers.map(w => (
+              {workers?.map((w) => (
                 <option key={w.id} value={w.id}>
                   {w.name}
                 </option>
@@ -76,19 +88,22 @@ export default function SelectWorker() {
               <div className={styles.passWrap}>
                 <input
                   className={styles.input}
-                  type={showPass ? 'text' : 'password'}
+                  type={showPass ? "text" : "password"}
                   value={password}
-                  onChange={e => { setPassword(e.target.value); setError('') }}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setError("");
+                  }}
                   placeholder="Введіть пароль"
                   autoFocus
                 />
                 <button
                   type="button"
                   className={styles.eyeBtn}
-                  onClick={() => setShowPass(v => !v)}
+                  onClick={() => setShowPass((v) => !v)}
                   tabIndex={-1}
                 >
-                  {showPass ? '🙈' : '👁️'}
+                  {showPass ? "🙈" : "👁️"}
                 </button>
               </div>
             </div>
@@ -96,8 +111,12 @@ export default function SelectWorker() {
 
           {error && <p className={styles.error}>{error}</p>}
 
-          <button className={styles.btn} type="submit" disabled={!selectedId || loading}>
-            {loading ? 'Вхід...' : 'Увійти'}
+          <button
+            className={styles.btn}
+            type="submit"
+            disabled={!selectedId || loading}
+          >
+            {loading ? "Вхід..." : "Увійти"}
           </button>
           <button type="button" className={styles.backBtn} onClick={handleBack}>
             ← Змінити зал
@@ -105,5 +124,5 @@ export default function SelectWorker() {
         </form>
       </div>
     </div>
-  )
+  );
 }

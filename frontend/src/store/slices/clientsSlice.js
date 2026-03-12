@@ -29,7 +29,7 @@ export const searchClients = createAsyncThunk(
   'clients/search',
   async (q, { rejectWithValue }) => {
     try {
-      const { data } = await $api.get('/clients', { params: { q } })
+      const { data } = await $api.get('/clients', { params: { q, limit: 15 } })
       return data
     } catch (err) {
       return rejectWithValue(err.response?.data?.error || 'Помилка пошуку')
