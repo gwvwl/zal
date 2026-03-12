@@ -80,6 +80,11 @@ const Subscription = sequelize.define('Subscription', {
     allowNull: false,
     defaultValue: DataTypes.NOW,
   },
+  allowed_gyms: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: null,
+  },
 }, {
   tableName: 'subscriptions',
   timestamps: false,

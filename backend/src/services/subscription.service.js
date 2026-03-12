@@ -1,12 +1,24 @@
+const { Op, literal } = require('sequelize');
 const sequelize = require('../config/db');
-const { Subscription } = require('../models');
+const { Subscription, Gym } = require('../models');
 
 const VALID_TYPES = ['unlimited', 'visits'];
 const VALID_CATEGORIES = ['gym', 'group', 'mma', 'sambo', 'grappling', 'stretching', 'boxing', 'karate', 'locker', 'rental', 'single'];
 
 const getAll = async (gymId, { clientId, status, category } = {}) => {
-  const where = { gym_id: gymId };
-  if (clientId) where.client_id = clientId;
+  const where = {};
+
+  if (clientId) {
+    // For a specific client: include their subscriptions from other gyms if allowed here
+    where.client_id = clientId;
+    where[Op.or] = [
+      { gym_id: gymId },
+      literal(`JSON_CONTAINS(allowed_gyms, '"${gymId}"')`),
+    ];
+  } else {
+    where.gym_id = gymId;
+  }
+
   if (status) where.status = status;
   if (category) where.category = category;
 
@@ -17,7 +29,7 @@ const getAll = async (gymId, { clientId, status, category } = {}) => {
 };
 
 const create = async (gymId, data) => {
-  const { clientId, type, category, label, totalVisits, price, durationDays } = data;
+  const { clientId, type, category, label, totalVisits, price, durationDays, multiGym } = data;
 
   if (!clientId || !type || !category || !label || price == null || !durationDays) {
     const err = new Error('clientId, type, category, label, price, durationDays are required');
@@ -50,6 +62,12 @@ const create = async (gymId, data) => {
     throw err;
   }
 
+  let allowedGyms = null;
+  if (multiGym) {
+    const allGyms = await Gym.findAll({ attributes: ['id'] });
+    allowedGyms = allGyms.map(g => g.id);
+  }
+
   return Subscription.create({
     gym_id:       gymId,
     client_id:    clientId,
@@ -66,6 +84,7 @@ const create = async (gymId, data) => {
     purchased_at: new Date(),
     activated_at: null,
     created_at:   new Date(),
+    allowed_gyms: allowedGyms,
   });
 };
 

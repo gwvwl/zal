@@ -35,13 +35,13 @@ const NOW = new Date();
 // ─── Визначення категорії по назві типу абонемента ────────────────────────────
 function detectCategory(label = '') {
   const l = label.toLowerCase();
-  if (/мма|mma/.test(l))                           return 'mma';
+  if (/ящик|шкафчик|locker/.test(l))                return 'locker';
+  if (/мма|mma/.test(l))                            return 'mma';
   if (/самбо|sambo/.test(l))                        return 'sambo';
   if (/грэпплинг|grappling/.test(l))                return 'grappling';
   if (/стретчинг|stretching/.test(l))               return 'stretching';
   if (/бокс(?!ёр)|boxing/.test(l))                  return 'boxing';
   if (/карат|karate/.test(l))                       return 'karate';
-  if (/ящик|шкафчик|locker/.test(l))                return 'locker';
   if (/аренда|rental/.test(l))                      return 'rental';
   if (/разов|single|разовое/.test(l))               return 'single';
   return 'gym';
@@ -106,6 +106,7 @@ async function insertInBatches(db, table, columns, allRows) {
     user:     process.env.DB_USER     || 'root',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME     || 'zal_db',
+    charset:  'utf8mb4',
     multipleStatements: false,
   });
   console.log('Підключено до БД.');
@@ -135,6 +136,27 @@ async function insertInBatches(db, table, columns, allRows) {
 
   // 5. Папка для фото
   if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+
+  // ── 0. Будуємо Map: clientId → ШтрихКод ────────────────────────────────────
+  // subscriptions — довідник карток (id → ШтрихКод)
+  // subscription_topups — продажі (Абонемент → картка, Клиент → клієнт)
+  const cardBarcodeMap = new Map();
+  for (const s of (data.subscriptions || [])) {
+    const barcode = (s['ШтрихКод'] || '').trim();
+    // Фільтруємо сміттєві значення (пусті, нулі, занадто короткі)
+    if (barcode && barcode.replace(/0/g, '').length > 0 && barcode.length >= 6) {
+      cardBarcodeMap.set(s.id, barcode);
+    }
+  }
+  const clientBarcodeMap = new Map();
+  for (const t of (data.subscription_topups || [])) {
+    const clientId = t['Клиент'] || null;
+    const cardId   = t['Абонемент'] || null;
+    if (clientId && cardId && cardBarcodeMap.has(cardId) && !clientBarcodeMap.has(clientId)) {
+      clientBarcodeMap.set(clientId, cardBarcodeMap.get(cardId));
+    }
+  }
+  console.log(`Штрихкоди: ${clientBarcodeMap.size} клієнтів з ${(data.clients || []).length} мають ШтрихКод`);
 
   // ── A. subscription_types → subscription_presets ───────────────────────────
   console.log('\n[1/5] subscription_presets...');
@@ -197,7 +219,7 @@ async function insertInBatches(db, table, columns, allRows) {
     clientRows.push([
       c.id,
       GYM_ID,
-      c.code ? ('8800' + String(c.code).trim()) : null,  // code (штрихкод: 8800 + код з 1С)
+      clientBarcodeMap.get(c.id) || null,                 // code = ШтрихКод з картки абонемента
       (c.Фамилия  || '').trim() || null,
       (c.Имя      || '').trim() || null,
       (c.Отчество || '').trim() || null,

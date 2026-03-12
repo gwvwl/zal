@@ -1,4 +1,4 @@
-const { Op } = require('sequelize');
+const { Op, literal } = require('sequelize');
 const sequelize = require('../config/db');
 const { Visit, Client, Payment, Subscription } = require('../models');
 
@@ -66,7 +66,14 @@ const enter = async (gymId, clientId, subscriptionId) => {
     let sub = null;
     if (subscriptionId) {
       sub = await Subscription.findOne({
-        where: { id: subscriptionId, gym_id: gymId, client_id: clientId },
+        where: {
+          id: subscriptionId,
+          client_id: clientId,
+          [Op.or]: [
+            { gym_id: gymId },
+            literal(`JSON_CONTAINS(allowed_gyms, '"${gymId}"')`),
+          ],
+        },
         transaction: t,
         lock: t.LOCK.UPDATE,
       });
@@ -77,6 +84,11 @@ const enter = async (gymId, clientId, subscriptionId) => {
       }
       if (sub.status !== 'active') {
         const err = new Error('Абонемент не активний');
+        err.status = 400;
+        throw err;
+      }
+      if (sub.category === 'locker') {
+        const err = new Error('Абонемент на ящик не дає права входу в зал');
         err.status = 400;
         throw err;
       }
@@ -111,11 +123,25 @@ const enter = async (gymId, clientId, subscriptionId) => {
 };
 
 const enterByCode = async (gymId, code, subscriptionId) => {
-  const client = await Client.findOne({ where: { code, gym_id: gymId } });
+  let client = await Client.findOne({ where: { code, gym_id: gymId } });
+
   if (!client) {
-    const err = new Error('Клієнт не знайдений у цьому залі');
-    err.status = 404;
-    throw err;
+    const foreignClient = await Client.findOne({ where: { code } });
+    if (foreignClient) {
+      const crossSub = await Subscription.findOne({
+        where: {
+          client_id: foreignClient.id,
+          status: 'active',
+          [Op.and]: [literal(`JSON_CONTAINS(allowed_gyms, '"${gymId}"')`)],
+        },
+      });
+      if (crossSub) client = foreignClient;
+    }
+    if (!client) {
+      const err = new Error('Клієнт не знайдений у цьому залі');
+      err.status = 404;
+      throw err;
+    }
   }
 
   const visit = await enter(gymId, client.id, subscriptionId);

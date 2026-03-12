@@ -64,6 +64,10 @@ const Client = sequelize.define('Client', {
     type: DataTypes.TEXT('long'),
     allowNull: true,
   },
+  comment: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
 }, {
   tableName: 'clients',
   timestamps: false,

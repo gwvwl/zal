@@ -41,6 +41,11 @@ const SubscriptionPreset = sequelize.define('SubscriptionPreset', {
     allowNull: false,
     defaultValue: true,
   },
+  multi_gym: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
 }, {
   tableName: 'subscription_presets',
   timestamps: false,

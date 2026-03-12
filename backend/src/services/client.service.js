@@ -1,7 +1,9 @@
-const { Op } = require('sequelize');
-const { Client, Payment } = require('../models');
+const { Op, literal } = require('sequelize');
+const { Client, Payment, Subscription } = require('../models');
 
 const getAll = async (gymId, { q, limit = 100, offset = 0 } = {}) => {
+  const lim = Math.min(Number(limit) || 100, 500);
+  const off = Number(offset) || 0;
   const where = { gym_id: gymId };
 
   if (q) {
@@ -13,16 +15,64 @@ const getAll = async (gymId, { q, limit = 100, offset = 0 } = {}) => {
     ];
   }
 
-  return Client.findAll({
+  const ownClients = await Client.findAll({
     where,
     order: [['last_name', 'ASC'], ['first_name', 'ASC']],
-    limit: Math.min(Number(limit) || 100, 500),
-    offset: Number(offset) || 0,
+    limit: lim,
+    offset: off,
   });
+
+  if (!q) return ownClients;
+
+  // Also search other gyms for cross-gym clients with active multi-gym subscriptions
+  const searchOr = [
+    { last_name:  { [Op.like]: `%${q}%` } },
+    { first_name: { [Op.like]: `%${q}%` } },
+    { phone:      { [Op.like]: `%${q}%` } },
+    { code:       { [Op.like]: `%${q}%` } },
+  ];
+  const foreignClients = await Client.findAll({
+    where: { gym_id: { [Op.ne]: gymId }, [Op.or]: searchOr },
+  });
+
+  const crossGymClients = [];
+  for (const c of foreignClients) {
+    const crossSub = await Subscription.findOne({
+      where: {
+        client_id: c.id,
+        status: 'active',
+        [Op.and]: [literal(`JSON_CONTAINS(allowed_gyms, '"${gymId}"')`)],
+      },
+    });
+    if (crossSub) crossGymClients.push(c);
+  }
+
+  const ownIds = new Set(ownClients.map(c => c.id));
+  const merged = [...ownClients];
+  for (const c of crossGymClients) {
+    if (!ownIds.has(c.id)) merged.push(c);
+  }
+
+  return merged.slice(0, lim);
 };
 
 const getById = async (gymId, id) => {
-  const client = await Client.findOne({ where: { id, gym_id: gymId } });
+  let client = await Client.findOne({ where: { id, gym_id: gymId } });
+
+  if (!client) {
+    const foreignClient = await Client.findOne({ where: { id } });
+    if (foreignClient) {
+      const crossSub = await Subscription.findOne({
+        where: {
+          client_id: foreignClient.id,
+          status: 'active',
+          [Op.and]: [literal(`JSON_CONTAINS(allowed_gyms, '"${gymId}"')`)],
+        },
+      });
+      if (crossSub) client = foreignClient;
+    }
+  }
+
   if (!client) {
     const err = new Error('Клієнт не знайдений');
     err.status = 404;
@@ -32,7 +82,22 @@ const getById = async (gymId, id) => {
 };
 
 const getByCode = async (gymId, code) => {
-  const client = await Client.findOne({ where: { code, gym_id: gymId } });
+  let client = await Client.findOne({ where: { code, gym_id: gymId } });
+
+  if (!client) {
+    const foreignClient = await Client.findOne({ where: { code } });
+    if (foreignClient) {
+      const crossSub = await Subscription.findOne({
+        where: {
+          client_id: foreignClient.id,
+          status: 'active',
+          [Op.and]: [literal(`JSON_CONTAINS(allowed_gyms, '"${gymId}"')`)],
+        },
+      });
+      if (crossSub) client = foreignClient;
+    }
+  }
+
   if (!client) {
     const err = new Error('Клієнт не знайдений у цьому залі');
     err.status = 404;
@@ -103,7 +168,7 @@ const update = async (gymId, id, data) => {
   const client = await getById(gymId, id);
 
   const { lastName, firstName, middleName, phone, email,
-          birthDate, gender, goal, experience, source, code, photo } = data;
+          birthDate, gender, goal, experience, source, code, photo, comment } = data;
 
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     const err = new Error('Невірний формат email');
@@ -130,6 +195,7 @@ const update = async (gymId, id, data) => {
     experience:  experience  ?? client.experience,
     source:      source      ?? client.source,
     photo:       photo       ?? client.photo,
+    comment:     comment     !== undefined ? comment : client.comment,
   });
 
   return client;
