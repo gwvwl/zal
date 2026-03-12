@@ -50,6 +50,18 @@ export const enterGymThunk = createAsyncThunk(
   }
 )
 
+export const singleEntryThunk = createAsyncThunk(
+  'gym/singleEntry',
+  async ({ clientId, amount, method, clientData }, { rejectWithValue }) => {
+    try {
+      const { data } = await $api.post('/visits/single-entry', { clientId, amount, method })
+      return { ...data.visit, client: clientData }
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.error || 'Помилка разового входу')
+    }
+  }
+)
+
 export const exitGymThunk = createAsyncThunk(
   'gym/exit',
   async ({ visitId, clientId }, { rejectWithValue }) => {
@@ -92,6 +104,14 @@ const gymSlice = createSlice({
       })
       .addCase(fetchClientVisits.rejected, (state) => {
         state.clientVisitsLoading = false
+      })
+      .addCase(singleEntryThunk.fulfilled, (state, action) => {
+        const existing = state.visits.find(
+          v => v.client_id === action.payload.client_id && v.exited_at === null
+        )
+        if (!existing) {
+          state.visits.push({ ...action.payload, exited_at: null })
+        }
       })
       .addCase(enterGymThunk.fulfilled, (state, action) => {
         const existing = state.visits.find(

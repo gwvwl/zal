@@ -838,7 +838,7 @@
 .subActions {
   display: flex;
   gap: 10px;
-  padding: 16px 20px;
+  padding: 0;
   border-top: 1px solid var(--gray-100);
 }
 
@@ -1288,6 +1288,40 @@
 
 .subModalSubmit:hover {
   background: var(--success-hover);
+}
+
+.methodToggle {
+  display: flex;
+  gap: 8px;
+}
+
+.methodBtn {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--gray-600);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.methodBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.methodBtnActive {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
+.methodBtnActive:hover {
+  background: var(--primary-hover, var(--primary));
+  color: #fff;
 }
 
 /* ── VisitHistory ── */

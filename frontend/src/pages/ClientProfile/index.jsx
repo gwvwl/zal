@@ -13,6 +13,7 @@ import {
 import {
   enterGymThunk,
   exitGymThunk,
+  fetchClientVisits,
   selectIsInGym,
   selectCurrentVisit,
 } from "../../store/slices/gymSlice.js";
@@ -25,6 +26,7 @@ import VisitHistory from "./components/VisitHistory.jsx";
 import SubscriptionHistory from "./components/SubscriptionHistory.jsx";
 import AddSubscriptionModal from "./components/AddSubscriptionModal.jsx";
 import ReplaceCardModal from "./components/ReplaceCardModal.jsx";
+import SingleEntryModal from "./components/SingleEntryModal.jsx";
 import FreezeModal from "./components/FreezeModal.jsx";
 
 import styles from "../../styles/clientProfile.module.css";
@@ -44,6 +46,7 @@ export default function ClientProfile({ clientId, onClose }) {
   const [showAddSub, setShowAddSub] = useState(false);
   const [showReplaceCard, setShowReplaceCard] = useState(false);
   const [freezeSubId, setFreezeSubId] = useState(null);
+  const [showSingleEntry, setShowSingleEntry] = useState(false);
   const [commentEdit, setCommentEdit] = useState(false);
   const [commentValue, setCommentValue] = useState('');
 
@@ -145,6 +148,7 @@ export default function ClientProfile({ clientId, onClose }) {
     }));
     if (enterGymThunk.fulfilled.match(result)) {
       dispatch(fetchClientSubscriptions(clientId));
+      dispatch(fetchClientVisits(clientId));
     } else {
       toast(result.payload || "Помилка входу");
     }
@@ -153,13 +157,15 @@ export default function ClientProfile({ clientId, onClose }) {
   async function handleExit() {
     if (!currentVisit) return;
     const result = await dispatch(exitGymThunk({ visitId: currentVisit.id, clientId }));
-    if (exitGymThunk.rejected.match(result)) {
+    if (exitGymThunk.fulfilled.match(result)) {
+      dispatch(fetchClientVisits(clientId));
+    } else if (exitGymThunk.rejected.match(result)) {
       toast(result.payload || "Помилка виходу");
     }
   }
 
   function handleSingleEntry() {
-    toast("Разовий вхід — буде реалізовано пізніше");
+    setShowSingleEntry(true);
   }
 
   async function handleSaveComment() {
@@ -373,6 +379,17 @@ export default function ClientProfile({ clientId, onClose }) {
             setFreezeSubId(null);
             dispatch(fetchClientSubscriptions(clientId));
           }}
+        />
+      )}
+
+      {showSingleEntry && (
+        <SingleEntryModal
+          clientId={clientId}
+          clientData={client
+            ? { id: client.id, first_name: client.first_name, last_name: client.last_name, phone: client.phone, photo: client.photo }
+            : null}
+          onClose={() => setShowSingleEntry(false)}
+          onSuccess={() => dispatch(fetchClientVisits(clientId))}
         />
       )}
 
