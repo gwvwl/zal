@@ -190,6 +190,35 @@ const getClients = async (req, res, next) => {
   }
 };
 
+// ── Payments ──
+
+const getPayments = async (req, res, next) => {
+  try {
+    const result = await adminService.getPayments(req.query);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const updatePayment = async (req, res, next) => {
+  try {
+    const payment = await adminService.updatePayment(req.params.id, req.body);
+    res.json(payment);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const cancelPayment = async (req, res, next) => {
+  try {
+    const payment = await adminService.cancelPayment(req.params.id, req.body.note);
+    res.json(payment);
+  } catch (err) {
+    next(err);
+  }
+};
+
 // ── Audit ──
 
 const getAuditLogs = async (req, res, next) => {
@@ -208,5 +237,8 @@ module.exports = {
   getPresets, createPreset, updatePreset, deletePreset,
   getStats,
   getClients,
+  getPayments,
+  updatePayment,
+  cancelPayment,
   getAuditLogs,
 };

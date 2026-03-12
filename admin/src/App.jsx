@@ -8,6 +8,7 @@ import Workers from './pages/Workers/index.jsx'
 import Presets from './pages/Presets/index.jsx'
 import Clients from './pages/Clients/index.jsx'
 import AuditLog from './pages/AuditLog/index.jsx'
+import Payments from './pages/Payments/index.jsx'
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('admin_token')
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="workers" element={<Workers />} />
           <Route path="presets" element={<Presets />} />
           <Route path="clients" element={<Clients />} />
+          <Route path="payments" element={<Payments />} />
           <Route path="audit" element={<AuditLog />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

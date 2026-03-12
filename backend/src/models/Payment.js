@@ -15,6 +15,10 @@ const Payment = sequelize.define('Payment', {
     type: DataTypes.UUID,
     allowNull: false,
   },
+  subscription_id: {
+    type: DataTypes.UUID,
+    allowNull: true,
+  },
   date: {
     type: DataTypes.DATE,
     allowNull: false,
@@ -43,6 +47,15 @@ const Payment = sequelize.define('Payment', {
   method: {
     type: DataTypes.ENUM('cash', 'card'),
     allowNull: false,
+  },
+  status: {
+    type: DataTypes.ENUM('active', 'cancelled'),
+    allowNull: false,
+    defaultValue: 'active',
+  },
+  cancel_note: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
   },
 }, {
   tableName: 'payments',

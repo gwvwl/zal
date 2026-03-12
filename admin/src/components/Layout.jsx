@@ -8,6 +8,7 @@ const NAV = [
   { to: "/workers", icon: "\u{1F465}", label: "Працівники" },
   { to: "/presets", icon: "\u{1F4CB}", label: "Абонементи" },
   { to: "/clients", icon: "\u{1F464}", label: "Клієнти" },
+  { to: "/payments", icon: "\u{1F4B3}", label: "Оплати" },
   { to: "/audit", icon: "\u{1F4DD}", label: "Аудит" },
 ];
 
@@ -17,6 +18,7 @@ const PAGE_TITLES = {
   "/workers": "Управління працівниками",
   "/presets": "Пресети абонементів",
   "/clients": "Клієнти",
+  "/payments": "Історія оплат",
   "/audit": "Аудит-лог",
 };
 

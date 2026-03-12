@@ -40,6 +40,11 @@ router.get('/stats', adminController.getStats);
 // Clients
 router.get('/clients', adminController.getClients);
 
+// Payments
+router.get('/payments', adminController.getPayments);
+router.patch('/payments/:id', adminController.updatePayment);
+router.patch('/payments/:id/cancel', adminController.cancelPayment);
+
 // Audit
 router.get('/audit', adminController.getAuditLogs);
 

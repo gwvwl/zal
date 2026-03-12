@@ -82,6 +82,7 @@ export default function AddSubscriptionModal({ clientId, onClose }) {
 
     const payResult = await dispatch(createPaymentThunk({
       clientId,
+      subscriptionId: subResult.payload?.id || null,
       amount: Number(price),
       type: 'subscription',
       label: preset.label,

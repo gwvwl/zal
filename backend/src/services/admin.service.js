@@ -413,6 +413,107 @@ const createAuditLog = async ({
   });
 };
 
+const getPayments = async ({ gymId, from, to, type, method, status, limit = 50, offset = 0 } = {}) => {
+  const where = {};
+  if (gymId) where.gym_id = gymId;
+  if (type) where.type = type;
+  if (method) where.method = method;
+  if (status) where.status = status;
+  if (from || to) {
+    where.date = {};
+    if (from) where.date[Op.gte] = new Date(from);
+    if (to) where.date[Op.lte] = new Date(to);
+  }
+
+  const { count, rows } = await Payment.findAndCountAll({
+    where,
+    include: [{
+      model: Client,
+      as: 'client',
+      attributes: ['id', 'first_name', 'last_name', 'photo'],
+    }],
+    order: [['date', 'DESC']],
+    limit: Math.min(Number(limit) || 50, 200),
+    offset: Number(offset) || 0,
+  });
+  return { items: rows, total: count };
+};
+
+const updatePayment = async (id, { amount, method }) => {
+  const { update } = require('./payment.service');
+  // find by id without gym filter (admin can see all)
+  const { Payment: P } = require('../models');
+  const payment = await P.findByPk(id);
+  if (!payment) {
+    const err = new Error('Платіж не знайдений');
+    err.status = 404;
+    throw err;
+  }
+  if (payment.status === 'cancelled') {
+    const err = new Error('Не можна редагувати скасований платіж');
+    err.status = 400;
+    throw err;
+  }
+  const VALID_METHODS = ['cash', 'card'];
+  const updates = {};
+  if (amount != null) {
+    if (Number(amount) <= 0) {
+      const err = new Error('Сума повинна бути більше 0');
+      err.status = 400;
+      throw err;
+    }
+    updates.amount = Number(amount);
+  }
+  if (method) {
+    if (!VALID_METHODS.includes(method)) {
+      const err = new Error('Невірний спосіб оплати');
+      err.status = 400;
+      throw err;
+    }
+    updates.method = method;
+  }
+  await payment.update(updates);
+  return payment;
+};
+
+const cancelPayment = async (id, note) => {
+  const sequelizeInstance = require('../config/db');
+  const { Payment: P, Subscription: S } = require('../models');
+
+  return sequelizeInstance.transaction(async (t) => {
+    const payment = await P.findByPk(id, { transaction: t, lock: t.LOCK.UPDATE });
+    if (!payment) {
+      const err = new Error('Платіж не знайдений');
+      err.status = 404;
+      throw err;
+    }
+    if (payment.status === 'cancelled') {
+      const err = new Error('Платіж вже скасований');
+      err.status = 400;
+      throw err;
+    }
+
+    await payment.update({
+      status: 'cancelled',
+      cancel_note: note || null,
+    }, { transaction: t });
+
+    if (payment.subscription_id) {
+      const sub = await S.findByPk(payment.subscription_id, { transaction: t, lock: t.LOCK.UPDATE });
+      if (sub && (sub.status === 'purchased' || sub.status === 'active')) {
+        await sub.update({
+          status: 'purchased',
+          start_date: null,
+          end_date: null,
+          activated_at: null,
+        }, { transaction: t });
+      }
+    }
+
+    return payment;
+  });
+};
+
 module.exports = {
   login,
   refresh,
@@ -432,4 +533,7 @@ module.exports = {
   getClients,
   getAuditLogs,
   createAuditLog,
+  getPayments,
+  updatePayment,
+  cancelPayment,
 };
