@@ -305,8 +305,10 @@ const getStats = async (gymId, from, to) => {
   });
 
   // Popular subscriptions (by label)
+  const popularSubsWhere = { ...gymWhere };
+  if (hasDateFilter) popularSubsWhere.created_at = dateFilter;
   const popularSubs = await Subscription.findAll({
-    where: gymWhere,
+    where: popularSubsWhere,
     attributes: [
       "label",
       "type",

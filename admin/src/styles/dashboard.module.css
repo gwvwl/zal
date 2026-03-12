@@ -29,6 +29,12 @@
   line-height: 1;
 }
 
+.statHint {
+  font-size: 12px;
+  color: var(--gray-400);
+  margin-top: 6px;
+}
+
 .statSuffix {
   font-size: 14px;
   font-weight: 500;
@@ -117,6 +123,22 @@
 
 .filterInput:focus {
   border-color: var(--primary);
+}
+
+.filterClearBtn {
+  padding: 10px 16px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius);
+  font-size: 14px;
+  color: var(--gray-600);
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.filterClearBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 /* ── Mobile ── */

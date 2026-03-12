@@ -9,10 +9,41 @@ function formatMoney(val) {
   return Number(val).toLocaleString('uk-UA') + ' грн'
 }
 
+function currentMonthStr() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+const MONTHS_UK = ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень']
+const MONTHS_UK_GEN = ['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня']
+
+function formatMonthLabel(monthStr) {
+  const [y, m] = monthStr.split('-').map(Number)
+  return `${MONTHS_UK[m - 1]} ${y}`
+}
+
+// "YYYY-MM-DD" → "29 січня"
+function formatDayLabel(mmdd) {
+  if (!mmdd) return ''
+  const [mm, dd] = mmdd.split('-').map(Number)
+  return `${dd} ${MONTHS_UK_GEN[mm - 1]}`
+}
+
+function monthToRange(month) {
+  const [y, m] = month.split('-').map(Number)
+  const from = new Date(y, m - 1, 1)
+  const to = new Date(y, m, 0, 23, 59, 59)
+  return {
+    from: from.toISOString().split('T')[0],
+    to: to.toISOString().split('T')[0],
+  }
+}
+
 export default function Dashboard() {
   const [stats, setStats] = useState(null)
   const [gymId, setGymId] = useState('')
   const [gyms, setGyms] = useState([])
+  const [month, setMonth] = useState(currentMonthStr())
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -23,23 +54,28 @@ export default function Dashboard() {
     setLoading(true)
     const params = {}
     if (gymId) params.gymId = gymId
+    if (month) {
+      const { from, to } = monthToRange(month)
+      params.from = from
+      params.to = to
+    }
     $api.get('/stats', { params })
       .then(r => setStats(r.data))
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [gymId])
+  }, [gymId, month])
 
   if (loading || !stats) {
     return <div style={{ padding: 40, textAlign: 'center', color: 'var(--gray-400)' }}>Завантаження...</div>
   }
 
   const revenueData = (stats.revenueByDay || []).map(d => ({
-    day: d.day?.slice(5),
+    day: formatDayLabel(d.day?.slice(5)),
     total: Number(d.total),
   }))
 
   const visitsData = (stats.visitsByDay || []).map(d => ({
-    day: d.day?.slice(5),
+    day: formatDayLabel(d.day?.slice(5)),
     count: Number(d.count),
   }))
 
@@ -55,32 +91,45 @@ export default function Dashboard() {
           <option value="">Усі зали</option>
           {gyms.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
         </select>
+        <input
+          type="month"
+          className={styles.filterInput}
+          value={month}
+          onChange={e => setMonth(e.target.value)}
+        />
+        {month && (
+          <button className={styles.filterClearBtn} onClick={() => setMonth('')} title="Скинути фільтр">
+            Весь час
+          </button>
+        )}
       </div>
 
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
           <div className={styles.statLabel}>Клієнти</div>
           <div className={styles.statValue}>{stats.totalClients}</div>
+          <div className={styles.statHint}>за весь час</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statLabel}>Активні абонементи</div>
           <div className={styles.statValue}>{stats.activeSubscriptions}</div>
+          <div className={styles.statHint}>на даний момент</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statLabel}>Дохід</div>
-          <div className={styles.statValue}>
-            {formatMoney(stats.totalRevenue)}
-          </div>
+          <div className={styles.statValue}>{formatMoney(stats.totalRevenue)}</div>
+          <div className={styles.statHint}>{month ? formatMonthLabel(month) : 'за весь час'}</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statLabel}>Відвідувань</div>
           <div className={styles.statValue}>{stats.totalVisits}</div>
+          <div className={styles.statHint}>{month ? formatMonthLabel(month) : 'за весь час'}</div>
         </div>
       </div>
 
       <div className={styles.chartsGrid}>
         <div className={styles.chartCard}>
-          <div className={styles.chartTitle}>Дохід за день</div>
+          <div className={styles.chartTitle}>Дохід за день {month ? `— ${formatMonthLabel(month)}` : '(останні 30 днів)'}</div>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={revenueData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
