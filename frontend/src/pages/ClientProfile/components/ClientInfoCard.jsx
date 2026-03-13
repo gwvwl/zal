@@ -12,10 +12,18 @@ function calcAge(birthDate) {
   return Math.floor(diff / (365.25 * 24 * 3600 * 1000))
 }
 
+function isBirthdayToday(birthDate) {
+  if (!birthDate) return false
+  const today = new Date()
+  const bd = new Date(birthDate)
+  return bd.getDate() === today.getDate() && bd.getMonth() === today.getMonth()
+}
+
 const genderMap = { male: 'Чоловік', female: 'Жінка' }
 
 export default function ClientInfoCard({ client, onPhotoClick }) {
   const age = calcAge(client.birth_date)
+  const isToday = isBirthdayToday(client.birth_date)
 
   return (
     <>
@@ -36,6 +44,11 @@ export default function ClientInfoCard({ client, onPhotoClick }) {
         <div className={styles.clientInfo}>
           <h1 className={styles.clientName}>
             {client.last_name} {client.first_name} {client.middle_name}
+            {isToday && (
+              <span style={{ marginLeft: 8, fontSize: 14, fontWeight: 600, color: '#e65100', background: '#fff3e0', padding: '2px 10px', borderRadius: 999, verticalAlign: 'middle' }}>
+                🎂 Сьогодні день народження!
+              </span>
+            )}
           </h1>
           <div className={styles.clientMeta}>
             {client.phone && <span>📞 {client.phone}</span>}

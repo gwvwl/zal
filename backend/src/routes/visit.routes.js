@@ -5,7 +5,7 @@ const { requireWorker } = require('../middlewares/auth');
 
 const entryLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 5,
+  max: 60,
   message: { error: 'Забагато спроб входу, спробуйте через хвилину' },
 });
 

@@ -103,7 +103,6 @@ export default function Dashboard() {
       <main className={styles.main}>
         <div className={styles.toolbar}>
           <div className={styles.toolbarLeft}>
-            <ScannerInput onClientSelect={handleClientSelect} />
             <button
               className={styles.searchBtn}
               onClick={() => setShowSearch(true)}
@@ -117,6 +116,7 @@ export default function Dashboard() {
               + Новий клієнт
             </button>
           </div>
+          <ScannerInput onClientSelect={handleClientSelect} />
         </div>
 
         <div className={styles.tableCard}>

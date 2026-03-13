@@ -72,7 +72,9 @@
   padding: 5px 14px;
   border-radius: var(--radius);
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .editBtn:hover {
@@ -201,7 +203,7 @@
   max-height: 90vh;
   border-radius: var(--radius-lg);
   object-fit: contain;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
 }
 
 .clientInfo {
@@ -287,7 +289,9 @@
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  transition:
+    background 0.2s,
+    transform 0.1s;
 }
 
 .enterBtn:hover:not(:disabled) {
@@ -313,7 +317,9 @@
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  transition:
+    background 0.2s,
+    transform 0.1s;
 }
 
 .exitBtn:hover:not(:disabled) {
@@ -423,7 +429,9 @@
   justify-content: center;
   overflow: hidden;
   padding: 0;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
 }
 
 .editPhotoBtn:hover {
@@ -797,7 +805,9 @@
   outline: none;
   background: var(--gray-50);
   box-sizing: border-box;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
   font-family: inherit;
 }
 
@@ -838,7 +848,7 @@
 .subActions {
   display: flex;
   gap: 10px;
-  padding: 0;
+  padding: 16px 20px;
   border-top: 1px solid var(--gray-100);
 }
 
@@ -1090,7 +1100,7 @@
   background: #fff;
   border: 1.5px solid var(--gray-200);
   border-radius: var(--radius);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   z-index: 400;
   display: flex;
   flex-direction: column;
@@ -1305,7 +1315,10 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    color 0.15s;
 }
 
 .methodBtn:hover {
@@ -1727,7 +1740,7 @@
   background: #fff;
   border: 1.5px solid var(--gray-200);
   border-radius: var(--radius);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   z-index: 10;
   overflow: hidden;
 }

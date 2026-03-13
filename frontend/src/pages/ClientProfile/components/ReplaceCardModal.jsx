@@ -14,6 +14,7 @@ export default function ReplaceCardModal({ clientId, onClose }) {
   const [loading, setLoading] = useState(false)
 
   const inputRef = useRef(null)
+  const lastCharTime = useRef(0)
 
   async function handleSubmit() {
     const trimmed = cardCode.trim()
@@ -41,7 +42,13 @@ export default function ReplaceCardModal({ clientId, onClose }) {
   }
 
   function handleCardKeyDown(e) {
-    if (e.key === 'Enter') handleSubmit()
+    if (e.key === 'Enter') {
+      // якщо Enter прийшов < 300ms після останнього символу — це сканер, ігноруємо
+      if (Date.now() - lastCharTime.current < 300) return
+      handleSubmit()
+    } else if (e.key.length === 1) {
+      lastCharTime.current = Date.now()
+    }
   }
 
   return (

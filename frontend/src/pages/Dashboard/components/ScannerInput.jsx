@@ -1,29 +1,18 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useDispatch } from 'react-redux'
 import { fetchClientByCode } from '../../../store/slices/clientsSlice.js'
 import styles from '../../../styles/dashboard.module.css'
 
 export default function ScannerInput({ onClientSelect }) {
   const dispatch = useDispatch()
-  const [isListening, setIsListening] = useState(false)
   const bufferRef = useRef('')
   const lastKeyTime = useRef(0)
 
   useEffect(() => {
-    function handleF7(e) {
-      if (e.key === 'F7') {
-        e.preventDefault()
-        setIsListening(v => !v)
-      }
-    }
-    window.addEventListener('keydown', handleF7)
-    return () => window.removeEventListener('keydown', handleF7)
-  }, [])
-
-  useEffect(() => {
-    if (!isListening) return
-
     function handleKey(e) {
+      const tag = document.activeElement?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+
       const now = Date.now()
       const delta = now - lastKeyTime.current
       lastKeyTime.current = now
@@ -41,15 +30,16 @@ export default function ScannerInput({ onClientSelect }) {
         bufferRef.current = ''
       }
 
-      bufferRef.current += e.key
+      if (e.key.length === 1) {
+        bufferRef.current += e.key
+      }
     }
 
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [isListening])
+  }, [])
 
   async function handleScannedCode(code) {
-    setIsListening(false)
     const result = await dispatch(fetchClientByCode(code))
     if (fetchClientByCode.fulfilled.match(result)) {
       onClientSelect && onClientSelect(result.payload.id)
@@ -60,19 +50,8 @@ export default function ScannerInput({ onClientSelect }) {
 
   return (
     <div className={styles.scanWrapper}>
-      <button
-        className={`${styles.scanBtn} ${isListening ? styles.scanActive : ''}`}
-        onClick={() => setIsListening(v => !v)}
-      >
-        <span className={styles.scanIcon}>📷</span>
-        {isListening ? 'Очікую сканування...' : 'Сканувати карту (F7)'}
-      </button>
-      {isListening && (
-        <div className={styles.scanHint}>
-          Підведіть сканер до штрих-коду клієнта
-          <button className={styles.scanCancel} onClick={() => setIsListening(false)}>✕ Скасувати</button>
-        </div>
-      )}
+      <span className={styles.scanIcon}>📷</span>
+      <span className={styles.scanAlwaysOn}>Сканер активний</span>
     </div>
   )
 }

@@ -65,6 +65,24 @@ export default function ClientProfile({ clientId, onClose }) {
     return () => { document.body.style.overflow = ""; };
   }, []);
 
+  // п.5: Пробіл — тригер Зайшов/Вийшов
+  useEffect(() => {
+    function handleSpace(e) {
+      if (e.code !== 'Space') return;
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'SELECT') return;
+      e.preventDefault();
+      if (isInGym) {
+        handleExit();
+      } else {
+        const activeSub = activeSubs.find(s => s.status === 'active');
+        doEnter(activeSub?.id || null);
+      }
+    }
+    window.addEventListener('keydown', handleSpace);
+    return () => window.removeEventListener('keydown', handleSpace);
+  }, [isInGym, activeSubs, currentVisit]);
+
   useEffect(() => {
     dispatch(clearCurrentClient());
     dispatch(fetchClient(clientId));
