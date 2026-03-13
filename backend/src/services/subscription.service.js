@@ -157,7 +157,7 @@ const activate = async (gymId, id) => {
   });
 };
 
-const freeze = async (gymId, id, { frozenTo }) => {
+const freeze = async (gymId, id, { frozenFrom, frozenTo }) => {
   const sub = await Subscription.findOne({ where: { id, gym_id: gymId } });
   if (!sub) {
     const err = new Error('Абонемент не знайдений');
@@ -170,27 +170,36 @@ const freeze = async (gymId, id, { frozenTo }) => {
     throw err;
   }
 
-  if (frozenTo) {
-    const d = new Date(frozenTo);
+  if (frozenFrom) {
+    const d = new Date(frozenFrom);
     if (isNaN(d.getTime())) {
-      const err = new Error('Невірний формат дати заморозки');
-      err.status = 400;
-      throw err;
-    }
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (d <= today) {
-      const err = new Error('Дата розморозки повинна бути в майбутньому');
+      const err = new Error('Невірний формат дати початку заморозки');
       err.status = 400;
       throw err;
     }
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  if (frozenTo) {
+    const d = new Date(frozenTo);
+    if (isNaN(d.getTime())) {
+      const err = new Error('Невірний формат дати кінця заморозки');
+      err.status = 400;
+      throw err;
+    }
+    const from = new Date(frozenFrom || new Date().toISOString().split('T')[0]);
+    from.setHours(0, 0, 0, 0);
+    if (d <= from) {
+      const err = new Error('Дата кінця заморозки повинна бути пізніше дати початку');
+      err.status = 400;
+      throw err;
+    }
+  }
+
+  const resolvedFrom = frozenFrom || new Date().toISOString().split('T')[0];
 
   await sub.update({
     status: 'frozen',
-    frozen_from: today,
+    frozen_from: resolvedFrom,
     frozen_to: frozenTo || null,
   });
   return sub;

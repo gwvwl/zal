@@ -13,17 +13,22 @@ const today = new Date().toISOString().split('T')[0]
 
 export default function FreezeModal({ subscriptionId, onClose }) {
   const dispatch = useDispatch()
+  const [frozenFrom, setFrozenFrom] = useState(today)
   const [frozenTo, setFrozenTo] = useState(addDays(today, 7))
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit() {
-    if (frozenTo <= today) {
-      setError('Дата кінця має бути пізніше сьогодні')
+    if (!frozenFrom) {
+      setError('Вкажіть дату початку заморозки')
+      return
+    }
+    if (frozenTo && frozenTo <= frozenFrom) {
+      setError('Дата кінця має бути пізніше дати початку')
       return
     }
     setLoading(true)
-    const result = await dispatch(freezeSubscriptionThunk({ subscriptionId, frozenTo }))
+    const result = await dispatch(freezeSubscriptionThunk({ subscriptionId, frozenFrom, frozenTo: frozenTo || undefined }))
     if (freezeSubscriptionThunk.fulfilled.match(result)) {
       onClose()
     } else {
@@ -41,17 +46,29 @@ export default function FreezeModal({ subscriptionId, onClose }) {
         </div>
 
         <div className={styles.subModalBody}>
-          <p className={styles.subModalHint}>Заморозка починається з сьогодні. При розморозці дні, що залишилися, будуть додані до кінця абонементу.</p>
+          <p className={styles.subModalHint}>При розморозці дні заморозки будуть додані до кінця абонементу.</p>
+
           <div className={styles.subModalField}>
-            <label className={styles.subModalLabel}>Заморозити до</label>
+            <label className={styles.subModalLabel}>Заморозити з</label>
+            <input
+              className={styles.subModalInput}
+              type="date"
+              value={frozenFrom}
+              onChange={e => { setFrozenFrom(e.target.value); setError('') }}
+            />
+          </div>
+
+          <div className={styles.subModalField}>
+            <label className={styles.subModalLabel}>Заморозити до (необов'язково)</label>
             <input
               className={styles.subModalInput}
               type="date"
               value={frozenTo}
-              min={addDays(today, 1)}
+              min={addDays(frozenFrom || today, 1)}
               onChange={e => { setFrozenTo(e.target.value); setError('') }}
             />
           </div>
+
           {error && <span className={styles.subModalError}>{error}</span>}
         </div>
 

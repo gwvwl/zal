@@ -82,9 +82,9 @@ export const dismissLockerThunk = createAsyncThunk(
 
 export const freezeSubscriptionThunk = createAsyncThunk(
   'subscriptions/freeze',
-  async ({ subscriptionId, frozenTo }, { rejectWithValue }) => {
+  async ({ subscriptionId, frozenFrom, frozenTo }, { rejectWithValue }) => {
     try {
-      await $api.patch(`/subscriptions/${subscriptionId}/freeze`, { frozenTo })
+      await $api.patch(`/subscriptions/${subscriptionId}/freeze`, { frozenFrom, frozenTo })
       return subscriptionId
     } catch (err) {
       return rejectWithValue(err.response?.data?.error || 'Помилка заморозки')
