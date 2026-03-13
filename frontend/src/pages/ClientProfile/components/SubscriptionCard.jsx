@@ -211,6 +211,7 @@ export default function SubscriptionCard({
   onExit,
   isInGym,
   onRenewLocker,
+  onDismissLocker,
 }) {
   // Include expired lockers
   const allSubs = subscriptions.filter(
@@ -219,6 +220,7 @@ export default function SubscriptionCard({
       (s.status === "expired" && s.category === "locker"),
   );
   const [selectedId, setSelectedId] = useState(allSubs[0]?.id || null);
+  const [confirmDismissId, setConfirmDismissId] = useState(null);
 
   useEffect(() => {
     if (allSubs.length > 0 && !allSubs.find((s) => s.id === selectedId)) {
@@ -374,15 +376,48 @@ export default function SubscriptionCard({
             </div>
           )}
 
-          {/* Expired locker → Renew (retroactive payment) */}
+          {/* Expired locker → Renew (retroactive payment) + Dismiss */}
           {isExpired && isLocker && (
             <div className={styles.subActions}>
+              <button
+                className={styles.subBtnFreeze}
+                onClick={() => setConfirmDismissId(current.id)}
+              >
+                Відв'язати
+              </button>
               <button
                 className={styles.subBtnActivate}
                 onClick={() => onRenewLocker && onRenewLocker(current)}
               >
                 💳 Оплатити
               </button>
+            </div>
+          )}
+
+          {/* Confirm dismiss modal */}
+          {confirmDismissId === current?.id && (
+            <div className={styles.subModalOverlay} onClick={() => setConfirmDismissId(null)}>
+              <div className={styles.subModal} style={{ maxWidth: 360 }} onClick={e => e.stopPropagation()}>
+                <div className={styles.subModalHeader}>
+                  <h2 className={styles.subModalTitle}>Відв'язати ящик?</h2>
+                  <button className={styles.subModalClose} onClick={() => setConfirmDismissId(null)}>✕</button>
+                </div>
+                <div className={styles.subModalBody}>
+                  <p style={{ fontSize: 14, color: 'var(--gray-600)', margin: 0 }}>
+                    Ящик <strong>{current.label}</strong> буде відв'язаний від клієнта. Цю дію не можна скасувати.
+                  </p>
+                </div>
+                <div className={styles.subModalFooter}>
+                  <button className={styles.subModalCancel} onClick={() => setConfirmDismissId(null)}>Скасувати</button>
+                  <button
+                    className={styles.subBtnFreeze}
+                    style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
+                    onClick={() => { setConfirmDismissId(null); onDismissLocker && onDismissLocker(current.id); }}
+                  >
+                    Відв'язати
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

@@ -6,13 +6,19 @@ const getAll = async (gymId, { q, limit = 100, offset = 0 } = {}) => {
   const off = Number(offset) || 0;
   const where = { gym_id: gymId };
 
-  if (q) {
-    where[Op.or] = [
+  function buildSearchOr(q) {
+    return [
       { last_name:  { [Op.like]: `%${q}%` } },
       { first_name: { [Op.like]: `%${q}%` } },
       { phone:      { [Op.like]: `%${q}%` } },
       { code:       { [Op.like]: `%${q}%` } },
+      literal(`CONCAT(last_name, ' ', first_name) LIKE '%${q.replace(/'/g, "''")}%'`),
+      literal(`CONCAT(first_name, ' ', last_name) LIKE '%${q.replace(/'/g, "''")}%'`),
     ];
+  }
+
+  if (q) {
+    where[Op.or] = buildSearchOr(q);
   }
 
   const ownClients = await Client.findAll({
@@ -25,12 +31,7 @@ const getAll = async (gymId, { q, limit = 100, offset = 0 } = {}) => {
   if (!q) return ownClients;
 
   // Also search other gyms for cross-gym clients with active multi-gym subscriptions
-  const searchOr = [
-    { last_name:  { [Op.like]: `%${q}%` } },
-    { first_name: { [Op.like]: `%${q}%` } },
-    { phone:      { [Op.like]: `%${q}%` } },
-    { code:       { [Op.like]: `%${q}%` } },
-  ];
+  const searchOr = buildSearchOr(q);
   const foreignClients = await Client.findAll({
     where: { gym_id: { [Op.ne]: gymId }, [Op.or]: searchOr },
   });

@@ -9,6 +9,7 @@ import {
   fetchClientSubscriptions,
   activateSubscriptionThunk,
   unfreezeSubscriptionThunk,
+  dismissLockerThunk,
 } from "../../store/slices/subscriptionsSlice.js";
 import {
   enterGymThunk,
@@ -242,6 +243,15 @@ export default function ClientProfile({ clientId, onClose }) {
     }
   }
 
+  async function handleDismissLocker(id) {
+    const result = await dispatch(dismissLockerThunk(id));
+    if (dismissLockerThunk.fulfilled.match(result)) {
+      dispatch(fetchClientSubscriptions(clientId));
+    } else {
+      toast(result.payload || "Помилка відв'язки");
+    }
+  }
+
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -345,6 +355,7 @@ export default function ClientProfile({ clientId, onClose }) {
                     onExit={handleExit}
                     isInGym={isInGym}
                     onRenewLocker={(sub) => setRenewLockerSub(sub)}
+                    onDismissLocker={handleDismissLocker}
                   />
                 </div>
               </div>
