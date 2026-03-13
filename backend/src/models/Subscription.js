@@ -46,7 +46,7 @@ const Subscription = sequelize.define('Subscription', {
     defaultValue: 0,
   },
   status: {
-    type: DataTypes.ENUM('purchased', 'active', 'expired', 'frozen'),
+    type: DataTypes.ENUM('purchased', 'active', 'expired', 'frozen', 'cancelled'),
     allowNull: false,
     defaultValue: 'purchased',
   },

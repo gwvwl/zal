@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import styles from "../../../styles/clientProfile.module.css";
 
 const CATEGORY_LABELS = {
@@ -20,6 +20,11 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString("uk-UA");
 }
 
+function daysSince(dateStr) {
+  if (!dateStr) return 0;
+  return Math.max(0, Math.floor((Date.now() - new Date(dateStr)) / (1000 * 60 * 60 * 24)));
+}
+
 function getProgressPercent(sub) {
   if (sub.type === "unlimited" && sub.start_date && sub.end_date) {
     const total = new Date(sub.end_date) - new Date(sub.start_date);
@@ -34,77 +39,36 @@ function getProgressPercent(sub) {
   return 0;
 }
 
-function SubSelector({ allSubs, selectedId, onSelect }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+function statusLabel(s) {
+  if (s.status === "purchased") return "Куплений";
+  if (s.status === "active") return "Активний";
+  if (s.status === "frozen") return "Заморожений";
+  if (s.status === "expired") return "Прострочений";
+  return s.status;
+}
 
-  useEffect(() => {
-    function handleClick(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
-
-  const selected = allSubs.find((s) => s.id === selectedId);
-  if (!selected) return null;
-
-  const statusLabel = (s) =>
-    s.status === "purchased"
-      ? "Куплений"
-      : s.status === "active"
-        ? "Активний"
-        : s.status === "frozen"
-          ? "Заморожений"
-          : "Прострочений";
-
+// Горизонтальні таби замість dropdown
+function SubNav({ allSubs, selectedId, onSelect }) {
   return (
-    <div className={styles.subSelectorWrap} ref={ref}>
-      <button
-        className={`${styles.subSelectorTrigger} ${selected.status === "purchased" ? styles.subSelectorPurchased : ""} ${selected.category === "locker" ? styles.subSelectorLocker : ""}`}
-        onClick={() => setOpen(!open)}
-      >
-        <div className={styles.subSelectorInfo}>
-          <span className={styles.subSelectorCategory}>
-            {selected.category === "locker" ? "🔐 " : ""}{CATEGORY_LABELS[selected.category] || selected.category}
-          </span>
-          <span className={styles.subSelectorLabel}>{selected.label}</span>
-        </div>
-        <span className={styles.subSelectorStatus}>
-          {statusLabel(selected)}
-        </span>
-        <span
-          className={`${styles.subDropdownArrow} ${open ? styles.subDropdownArrowOpen : ""}`}
+    <div className={styles.subNav}>
+      {allSubs.map((sub) => (
+        <button
+          key={sub.id}
+          className={`${styles.subNavBtn}
+            ${sub.id === selectedId ? styles.subNavBtnActive : ""}
+            ${(sub.status === "active" || sub.status === "frozen") ? styles.subNavBtnStatusActive : ""}
+            ${sub.status === "purchased" ? styles.subNavBtnPurchased : ""}
+            ${sub.category === "locker" && sub.status !== "expired" ? styles.subNavBtnLocker : ""}
+            ${sub.status === "expired" ? styles.subNavBtnExpired : ""}`}
+          onClick={() => onSelect(sub.id)}
         >
-          ▾
-        </span>
-      </button>
-      {open && (
-        <div className={styles.subSelectorMenu}>
-          {allSubs?.map((sub) => (
-            <button
-              key={sub.id}
-              className={`${styles.subSelectorOption} ${sub.id === selectedId ? styles.subSelectorOptionActive : ""} ${sub.category === "locker" ? styles.subSelectorOptionLocker : ""}`}
-              onClick={() => {
-                onSelect(sub.id);
-                setOpen(false);
-              }}
-            >
-              <div className={styles.subSelectorInfo}>
-                <span className={styles.subSelectorCategory}>
-                  {sub.category === "locker" ? "🔐 " : ""}{CATEGORY_LABELS[sub.category] || sub.category}
-                </span>
-                <span className={styles.subSelectorLabel}>{sub.label}</span>
-              </div>
-              <span
-                className={`${styles.subSelectorBadge} ${sub.status === "active" ? styles.subStatusActive : sub.status === "frozen" ? styles.subStatusFrozen : sub.status === "purchased" ? styles.subStatusPurchased : styles.subStatusExpired}`}
-              >
-                {statusLabel(sub)}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
+          <span className={styles.subNavCategory}>
+            {sub.category === "locker" ? "🔐 " : ""}
+            {CATEGORY_LABELS[sub.category] || sub.category}
+          </span>
+          <span className={styles.subNavLabel}>{sub.label}</span>
+        </button>
+      ))}
     </div>
   );
 }
@@ -125,6 +89,11 @@ function SubContent({ sub }) {
         <div className={styles.subFrozenBanner}>
           Заморожено з {formatDate(sub.frozen_from)} до{" "}
           {formatDate(sub.frozen_to)}
+        </div>
+      )}
+      {isExpired && sub.category === "locker" && (
+        <div className={styles.subExpiredBanner}>
+          Прострочений {daysSince(sub.end_date)} дн. (з {formatDate(sub.end_date)})
         </div>
       )}
       {isLow && isActive && (
@@ -176,7 +145,7 @@ function SubContent({ sub }) {
                   {formatDate(sub.end_date)}
                 </span>
               </div>
-              {!isFrozen && (
+              {!isFrozen && !isExpired && (
                 <div className={styles.subProgressWrap}>
                   <div className={styles.subProgressBar}>
                     <div
@@ -185,9 +154,7 @@ function SubContent({ sub }) {
                     />
                   </div>
                   <span className={styles.subProgressLabel}>
-                    {isExpired
-                      ? "Прострочено"
-                      : `Залишилось ${100 - getProgressPercent(sub)}%`}
+                    {`Залишилось ${100 - getProgressPercent(sub)}%`}
                   </span>
                 </div>
               )}
@@ -207,22 +174,26 @@ function SubContent({ sub }) {
                   {formatDate(sub.end_date)}
                 </span>
               </div>
-              <div className={styles.subMetaItem}>
-                <span className={styles.subMetaLabel}>Залишилось</span>
-                <span
-                  className={`${styles.subMetaVal} ${isLow ? styles.subMetaLow : ""}`}
-                >
-                  {sub.total_visits - sub.used_visits} відвідувань
-                </span>
-              </div>
-              <div className={styles.subProgressWrap}>
-                <div className={styles.subProgressBar}>
-                  <div
-                    className={`${styles.subProgressFill} ${isLow ? styles.subProgressLow : ""} ${isExpired ? styles.subProgressExpired : ""}`}
-                    style={{ width: `${getProgressPercent(sub)}%` }}
-                  />
-                </div>
-              </div>
+              {!isExpired && (
+                <>
+                  <div className={styles.subMetaItem}>
+                    <span className={styles.subMetaLabel}>Залишилось</span>
+                    <span
+                      className={`${styles.subMetaVal} ${isLow ? styles.subMetaLow : ""}`}
+                    >
+                      {sub.total_visits - sub.used_visits} відвідувань
+                    </span>
+                  </div>
+                  <div className={styles.subProgressWrap}>
+                    <div className={styles.subProgressBar}>
+                      <div
+                        className={`${styles.subProgressFill} ${isLow ? styles.subProgressLow : ""}`}
+                        style={{ width: `${getProgressPercent(sub)}%` }}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>
@@ -239,9 +210,13 @@ export default function SubscriptionCard({
   onEnter,
   onExit,
   isInGym,
+  onRenewLocker,
 }) {
-  const allSubs = subscriptions.filter((s) =>
-    ["active", "frozen", "purchased"].includes(s.status),
+  // Include expired lockers
+  const allSubs = subscriptions.filter(
+    (s) =>
+      ["active", "frozen", "purchased"].includes(s.status) ||
+      (s.status === "expired" && s.category === "locker"),
   );
   const [selectedId, setSelectedId] = useState(allSubs[0]?.id || null);
 
@@ -296,14 +271,8 @@ export default function SubscriptionCard({
   const isPurchased = current?.status === "purchased";
   const isActive = current?.status === "active";
   const isFrozen = current?.status === "frozen";
+  const isExpired = current?.status === "expired";
 
-  const statusLabel = isPurchased
-    ? "Куплений"
-    : isActive
-      ? "Активний"
-      : isFrozen
-        ? "Заморожений"
-        : "Прострочений";
   const statusCls = isPurchased
     ? styles.subStatusPurchased
     : isActive
@@ -314,8 +283,9 @@ export default function SubscriptionCard({
 
   return (
     <div>
+      {/* Таби замість dropdown */}
       {allSubs.length > 1 && (
-        <SubSelector
+        <SubNav
           allSubs={allSubs}
           selectedId={selectedId}
           onSelect={setSelectedId}
@@ -324,17 +294,22 @@ export default function SubscriptionCard({
 
       {current && (
         <div
-          className={`${styles.subCard} ${isFrozen ? styles.subCardFrozen : ""} ${isPurchased ? styles.subCardPurchased : ""} ${isLocker ? styles.subCardLocker : ""}`}
+          className={`${styles.subCard}
+            ${isFrozen ? styles.subCardFrozen : ""}
+            ${isPurchased ? styles.subCardPurchased : ""}
+            ${isLocker ? styles.subCardLocker : ""}
+            ${isExpired ? styles.subCardExpired : ""}`}
         >
           <div className={styles.subTop}>
             <div>
               <p className={styles.subLabel}>
-                {isLocker ? "🔐 " : ""}{CATEGORY_LABELS[current.category] || current.category}
+                {isLocker ? "🔐 " : ""}
+                {CATEGORY_LABELS[current.category] || current.category}
               </p>
               <p className={styles.subValue}>{current.label}</p>
             </div>
             <span className={`${styles.subStatus} ${statusCls}`}>
-              {statusLabel}
+              {statusLabel(current)}
             </span>
           </div>
 
@@ -395,6 +370,18 @@ export default function SubscriptionCard({
                 onClick={() => onUnfreeze(current.id)}
               >
                 Розморозити
+              </button>
+            </div>
+          )}
+
+          {/* Expired locker → Renew (retroactive payment) */}
+          {isExpired && isLocker && (
+            <div className={styles.subActions}>
+              <button
+                className={styles.subBtnActivate}
+                onClick={() => onRenewLocker && onRenewLocker(current)}
+              >
+                💳 Оплатити
               </button>
             </div>
           )}

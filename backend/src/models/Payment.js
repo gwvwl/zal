@@ -29,7 +29,7 @@ const Payment = sequelize.define('Payment', {
     allowNull: false,
   },
   type: {
-    type: DataTypes.ENUM('subscription', 'single', 'card_replace'),
+    type: DataTypes.ENUM('subscription', 'single', 'card_replace', 'locker'),
     allowNull: false,
   },
   label: {

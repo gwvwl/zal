@@ -9,6 +9,7 @@ const TYPE_LABELS = {
   subscription: 'Абонемент',
   single: 'Разовий вхід',
   card_replace: 'Заміна картки',
+  locker: 'Ящик',
 }
 
 const METHOD_LABELS = {
@@ -269,6 +270,7 @@ export default function Payments() {
           <option value="subscription">Абонемент</option>
           <option value="single">Разовий вхід</option>
           <option value="card_replace">Заміна картки</option>
+          <option value="locker">Ящик</option>
         </select>
 
         <select className={s.filterSelect} value={methodFilter} onChange={handleFilterChange(setMethodFilter)}>
@@ -356,10 +358,10 @@ export default function Payments() {
                         borderRadius: 999,
                         fontSize: 12,
                         fontWeight: 600,
-                        background: p.type === 'subscription' ? 'var(--primary-light)' : p.type === 'single' ? '#f0fdf4' : '#f3f4f6',
-                        color: p.type === 'subscription' ? 'var(--primary)' : p.type === 'single' ? '#166534' : '#374151',
+                        background: p.type === 'subscription' ? 'var(--primary-light)' : p.type === 'single' ? '#f0fdf4' : p.type === 'locker' ? '#fffbeb' : '#f3f4f6',
+                        color: p.type === 'subscription' ? 'var(--primary)' : p.type === 'single' ? '#166534' : p.type === 'locker' ? '#b45309' : '#374151',
                       }}>
-                        {TYPE_LABELS[p.type] || p.type}
+                        {p.type === 'locker' ? '🔐 ' : ''}{TYPE_LABELS[p.type] || p.type}
                       </span>
                     </td>
                     <td>

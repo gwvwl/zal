@@ -316,18 +316,22 @@ async function insertInBatches(db, table, columns, allRows) {
 
   const topupPayRows = (data.subscription_topups || [])
     .filter(t => t.posted && t.Клиент && t.Сумма)
-    .map(t => [
-      t.id,
-      GYM_ID,
-      t.Клиент,
-      parseDate(t.date) || NOW,
-      Number(t.Сумма) || 0,
-      'subscription',
-      typeMap[t.ТипАбонемента]?.label || 'Абонемент (1С)',
-      SYSTEM_WORKER_ID,
-      SYSTEM_WORKER_NAME,
-      'cash',
-    ]);
+    .map(t => {
+      const tInfo = typeMap[t.ТипАбонемента] || {};
+      const payType = tInfo.category === 'locker' ? 'locker' : 'subscription';
+      return [
+        t.id,
+        GYM_ID,
+        t.Клиент,
+        parseDate(t.date) || NOW,
+        Number(t.Сумма) || 0,
+        payType,
+        tInfo.label || 'Абонемент (1С)',
+        SYSTEM_WORKER_ID,
+        SYSTEM_WORKER_NAME,
+        'cash',
+      ];
+    });
 
   const balanceRows = (data.opening_balances || [])
     .filter(b => b.Клиент && b.Сумма)

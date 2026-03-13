@@ -28,6 +28,7 @@ import AddSubscriptionModal from "./components/AddSubscriptionModal.jsx";
 import ReplaceCardModal from "./components/ReplaceCardModal.jsx";
 import SingleEntryModal from "./components/SingleEntryModal.jsx";
 import FreezeModal from "./components/FreezeModal.jsx";
+import LockerRenewModal from "./components/LockerRenewModal.jsx";
 
 import styles from "../../styles/clientProfile.module.css";
 import { photoUrl } from "../../utils/photoUrl";
@@ -46,6 +47,7 @@ export default function ClientProfile({ clientId, onClose }) {
   const [showAddSub, setShowAddSub] = useState(false);
   const [showReplaceCard, setShowReplaceCard] = useState(false);
   const [freezeSubId, setFreezeSubId] = useState(null);
+  const [renewLockerSub, setRenewLockerSub] = useState(null);
   const [showSingleEntry, setShowSingleEntry] = useState(false);
   const [commentEdit, setCommentEdit] = useState(false);
   const [commentValue, setCommentValue] = useState('');
@@ -55,10 +57,23 @@ export default function ClientProfile({ clientId, onClose }) {
   const isInGym = useSelector((state) => selectIsInGym(state, clientId));
   const currentVisit = useSelector((state) => selectCurrentVisit(state, clientId));
 
-  const STATUS_ORDER = { active: 0, frozen: 1, purchased: 2 };
-  const activeSubs = clientSubs
-    .filter(s => s.status === "active" || s.status === "frozen" || s.status === "purchased")
-    .sort((a, b) => (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9));
+  const CATEGORY_ORDER = { gym: 0, group: 1, mma: 1, sambo: 1, grappling: 1, stretching: 1, boxing: 1, karate: 1, rental: 1, single: 1, locker: 2 };
+  const STATUS_ORDER = { active: 0, frozen: 1, purchased: 2, expired: 3 };
+  const nonExpiredSubs = clientSubs.filter(s =>
+    s.status === "active" || s.status === "frozen" || s.status === "purchased"
+  );
+  const hasActiveLocker = nonExpiredSubs.some(s => s.category === "locker");
+  const latestExpiredLocker = !hasActiveLocker
+    ? clientSubs
+        .filter(s => s.status === "expired" && s.category === "locker")
+        .sort((a, b) => new Date(b.end_date) - new Date(a.end_date))[0]
+    : null;
+  const activeSubs = [...nonExpiredSubs, ...(latestExpiredLocker ? [latestExpiredLocker] : [])]
+    .sort((a, b) => {
+      const catDiff = (CATEGORY_ORDER[a.category] ?? 1) - (CATEGORY_ORDER[b.category] ?? 1);
+      if (catDiff !== 0) return catDiff;
+      return (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9);
+    });
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -329,6 +344,7 @@ export default function ClientProfile({ clientId, onClose }) {
                     onEnter={doEnter}
                     onExit={handleExit}
                     isInGym={isInGym}
+                    onRenewLocker={(sub) => setRenewLockerSub(sub)}
                   />
                 </div>
               </div>
@@ -397,6 +413,15 @@ export default function ClientProfile({ clientId, onClose }) {
             setFreezeSubId(null);
             dispatch(fetchClientSubscriptions(clientId));
           }}
+        />
+      )}
+
+      {renewLockerSub && (
+        <LockerRenewModal
+          clientId={clientId}
+          expiredSub={renewLockerSub}
+          onClose={() => setRenewLockerSub(null)}
+          onSuccess={() => dispatch(fetchClientSubscriptions(clientId))}
         />
       )}
 

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchPresets, createSubscriptionThunk } from '../../../store/slices/subscriptionsSlice.js'
 import { createPaymentThunk } from '../../../store/slices/paymentsSlice.js'
+import $api from '../../../api/http.js'
 import styles from '../../../styles/clientProfile.module.css'
 
 const CATEGORY_LABELS = { gym: 'Спортзал', group: 'Групові заняття' }
@@ -17,18 +18,28 @@ export default function AddSubscriptionModal({ clientId, onClose }) {
   const [method, setMethod] = useState('cash')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [takenLockerLabels, setTakenLockerLabels] = useState([])
 
   const dropdownRef = useRef(null)
   const searchInputRef = useRef(null)
 
-  const preset = presets.find(p => p.id === selectedPresetId) ?? presets[0]
-  const filtered = presets.filter(p =>
+  const availablePresets = presets.filter(p =>
+    !(p.category === 'locker' && takenLockerLabels.includes(p.label))
+  )
+  const preset = availablePresets.find(p => p.id === selectedPresetId) ?? availablePresets[0]
+  const filtered = availablePresets.filter(p =>
     p.label.toLowerCase().includes(search.toLowerCase())
   )
 
   useEffect(() => {
     dispatch(fetchPresets())
-  }, [dispatch])
+    $api.get('/subscriptions', { params: { category: 'locker' } }).then(({ data }) => {
+      const taken = data
+        .filter(s => ['active', 'purchased', 'frozen'].includes(s.status))
+        .map(s => s.label)
+      setTakenLockerLabels(taken)
+    }).catch(() => {})
+  }, [dispatch, clientId])
 
   useEffect(() => {
     if (preset) setPrice(preset.price)
@@ -84,7 +95,7 @@ export default function AddSubscriptionModal({ clientId, onClose }) {
       clientId,
       subscriptionId: subResult.payload?.id || null,
       amount: Number(price),
-      type: 'subscription',
+      type: preset.category === 'locker' ? 'locker' : 'subscription',
       label: preset.label,
       method,
     }))

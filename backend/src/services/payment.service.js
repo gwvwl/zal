@@ -2,7 +2,7 @@ const { Op } = require('sequelize');
 const sequelize = require('../config/db');
 const { Payment, Client, Subscription } = require('../models');
 
-const VALID_TYPES = ['subscription', 'single', 'card_replace'];
+const VALID_TYPES = ['subscription', 'single', 'card_replace', 'locker'];
 const VALID_METHODS = ['cash', 'card'];
 
 const getAll = async (gymId, { clientId, from, to, limit = 100, offset = 0 } = {}) => {

@@ -56,6 +56,30 @@ export const activateSubscriptionThunk = createAsyncThunk(
   }
 )
 
+export const renewLockerThunk = createAsyncThunk(
+  'subscriptions/renewLocker',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const { data } = await $api.post('/subscriptions/renew-locker', payload)
+      return data
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.error || 'Помилка оновлення ящика')
+    }
+  }
+)
+
+export const dismissLockerThunk = createAsyncThunk(
+  'subscriptions/dismissLocker',
+  async (id, { rejectWithValue }) => {
+    try {
+      await $api.patch(`/subscriptions/${id}/dismiss`)
+      return id
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.error || 'Помилка відв\'язки')
+    }
+  }
+)
+
 export const freezeSubscriptionThunk = createAsyncThunk(
   'subscriptions/freeze',
   async ({ subscriptionId, frozenTo }, { rejectWithValue }) => {

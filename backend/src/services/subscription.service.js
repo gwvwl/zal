@@ -62,6 +62,23 @@ const create = async (gymId, data) => {
     throw err;
   }
 
+  if (category === 'locker') {
+    const taken = await Subscription.findOne({
+      where: {
+        gym_id: gymId,
+        category: 'locker',
+        label,
+        client_id: { [Op.ne]: clientId },
+        status: { [Op.in]: ['active', 'purchased', 'frozen'] },
+      },
+    });
+    if (taken) {
+      const err = new Error(`Ящик "${label}" вже зайнятий іншим клієнтом`);
+      err.status = 409;
+      throw err;
+    }
+  }
+
   let allowedGyms = null;
   if (multiGym) {
     const allGyms = await Gym.findAll({ attributes: ['id'] });
@@ -209,4 +226,83 @@ const unfreeze = async (gymId, id) => {
   return sub;
 };
 
-module.exports = { getAll, create, activate, freeze, unfreeze };
+// Creates a locker subscription that is immediately active (retroactive start date)
+const renewLocker = async (gymId, data) => {
+  const { clientId, type, category, label, price, durationDays, startDate } = data;
+
+  if (!clientId || !type || !label || price == null || !durationDays) {
+    const err = new Error('clientId, type, label, price, durationDays are required');
+    err.status = 400;
+    throw err;
+  }
+  if (category !== 'locker') {
+    const err = new Error('renewLocker тільки для ящиків (locker)');
+    err.status = 400;
+    throw err;
+  }
+  if (Number(price) <= 0) {
+    const err = new Error('Ціна повинна бути більше 0');
+    err.status = 400;
+    throw err;
+  }
+  if (Number(durationDays) <= 0) {
+    const err = new Error('Тривалість повинна бути більше 0');
+    err.status = 400;
+    throw err;
+  }
+
+  const taken = await Subscription.findOne({
+    where: {
+      gym_id: gymId,
+      category: 'locker',
+      label,
+      client_id: { [Op.ne]: clientId },
+      status: { [Op.in]: ['active', 'purchased', 'frozen'] },
+    },
+  });
+  if (taken) {
+    const err = new Error(`Ящик "${label}" вже зайнятий іншим клієнтом`);
+    err.status = 409;
+    throw err;
+  }
+
+  const start = startDate || new Date().toISOString().split('T')[0];
+  const endDate = addDays(start, Number(durationDays));
+
+  return Subscription.create({
+    gym_id:        gymId,
+    client_id:     clientId,
+    type,
+    category:      'locker',
+    label,
+    start_date:    start,
+    end_date:      endDate,
+    total_visits:  null,
+    used_visits:   0,
+    status:        'active',
+    price:         Number(price),
+    duration_days: Number(durationDays),
+    purchased_at:  new Date(),
+    activated_at:  new Date(),
+    created_at:    new Date(),
+    allowed_gyms:  null,
+  });
+};
+
+const dismiss = async (gymId, id) => {
+  const sub = await Subscription.findOne({ where: { id, gym_id: gymId } });
+  if (!sub) {
+    const err = new Error('Абонемент не знайдений');
+    err.status = 404;
+    throw err;
+  }
+  if (sub.status !== 'expired') {
+    const err = new Error('Відв\'язати можна лише прострочений абонемент');
+    err.status = 400;
+    throw err;
+  }
+  await sub.update({ status: 'cancelled' });
+  return sub;
+};
+
+module.exports = { getAll, create, activate, freeze, unfreeze, renewLocker, dismiss };

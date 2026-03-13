@@ -75,4 +75,30 @@ const getPresets = async (req, res, next) => {
   }
 };
 
-module.exports = { getAll, create, activate, freeze, unfreeze, getPresets };
+const renewLocker = async (req, res, next) => {
+  try {
+    const sub = await subscriptionService.renewLocker(req.auth.gym_id, req.body);
+    audit(req.auth, 'renew_locker', sub.id, {
+      client_id: req.body.clientId,
+      label: sub.label,
+      price: sub.price,
+      start_date: sub.start_date,
+      end_date: sub.end_date,
+    });
+    res.status(201).json(sub);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const dismiss = async (req, res, next) => {
+  try {
+    const sub = await subscriptionService.dismiss(req.auth.gym_id, req.params.id);
+    audit(req.auth, 'dismiss', sub.id, { client_id: sub.client_id, label: sub.label });
+    res.json(sub);
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { getAll, create, activate, freeze, unfreeze, getPresets, renewLocker, dismiss };

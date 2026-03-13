@@ -1609,6 +1609,7 @@
   gap: 6px;
   margin-bottom: 10px;
   overflow-x: auto;
+  padding: 0 2px;
 }
 
 .subNavBtn {
@@ -1632,20 +1633,31 @@
 }
 
 .subNavBtnActive {
-  border-color: var(--primary);
-  background: var(--primary-light);
-  box-shadow: 0 0 0 1px var(--primary);
+  box-shadow: 0 0 0 2px var(--gray-300);
 }
 
+/* Active / Frozen → green */
+.subNavBtnStatusActive {
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+.subNavBtnStatusActive .subNavLabel {
+  color: #15803d;
+}
+.subNavBtnStatusActive.subNavBtnActive {
+  box-shadow: 0 0 0 2px #22c55e;
+}
+
+/* Purchased → yellow */
 .subNavBtnPurchased {
-  border-style: dashed;
-  border-color: #ffb74d;
+  border-color: #f59e0b;
+  background: #fffbeb;
 }
-
+.subNavBtnPurchased .subNavLabel {
+  color: #b45309;
+}
 .subNavBtnPurchased.subNavBtnActive {
-  border-color: #e65100;
-  background: #fff3e0;
-  box-shadow: 0 0 0 1px #e65100;
+  box-shadow: 0 0 0 2px #f59e0b;
 }
 
 .subNavCategory {
@@ -1779,6 +1791,31 @@
 .subCardLocker {
   background: #fffbeb;
   border: 1.5px solid #fcd34d;
+}
+
+.subNavBtnLocker {
+  border-color: #fcd34d;
+  background: #fffdf0;
+}
+
+.subNavBtnLocker.subNavBtnActive {
+  border-color: #f59e0b;
+  background: #fef3c7;
+  box-shadow: 0 0 0 1px #f59e0b;
+}
+
+.subNavBtnExpired {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+.subNavBtnExpired .subNavLabel {
+  color: #b91c1c;
+}
+.subNavBtnExpired .subNavCategory {
+  color: #ef4444;
+}
+.subNavBtnExpired.subNavBtnActive {
+  box-shadow: 0 0 0 2px #ef4444;
 }
 
 .subSelectorLocker {

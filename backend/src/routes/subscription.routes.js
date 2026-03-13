@@ -8,5 +8,7 @@ router.post('/', requireWorker, subscriptionController.create);
 router.patch('/:id/activate', requireWorker, subscriptionController.activate);
 router.patch('/:id/freeze', requireWorker, subscriptionController.freeze);
 router.patch('/:id/unfreeze', requireWorker, subscriptionController.unfreeze);
+router.post('/renew-locker', requireWorker, subscriptionController.renewLocker);
+router.patch('/:id/dismiss', requireWorker, subscriptionController.dismiss);
 
 module.exports = router;
