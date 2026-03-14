@@ -242,7 +242,16 @@ const unfreeze = async (gymId, id) => {
   today.setHours(0, 0, 0, 0);
   const frozenFrom = new Date(sub.frozen_from);
   frozenFrom.setHours(0, 0, 0, 0);
-  const actualFrozenDays = Math.max(0, Math.floor((today - frozenFrom) / (1000 * 60 * 60 * 24)));
+
+  // Cap at frozenTo if set: user planned 3 days, don't add 6 if they unfreeze late
+  let effectiveEnd = today;
+  if (sub.frozen_to) {
+    const frozenTo = new Date(sub.frozen_to);
+    frozenTo.setHours(0, 0, 0, 0);
+    if (frozenTo < today) effectiveEnd = frozenTo;
+  }
+
+  const actualFrozenDays = Math.max(0, Math.floor((effectiveEnd - frozenFrom) / (1000 * 60 * 60 * 24)));
 
   const newEndDate = addDays(sub.end_date, actualFrozenDays);
 
@@ -298,6 +307,8 @@ const renewLocker = async (gymId, data) => {
   const start = startDate || new Date().toISOString().split('T')[0];
   const tempSub = { duration_days: durationDays ? Number(durationDays) : null, duration_months: null };
   const endDate = calcEndDate(start, tempSub);
+  const today = new Date().toISOString().split('T')[0];
+  const status = endDate >= today ? 'active' : 'expired';
 
   return Subscription.create({
     gym_id:          gymId,
@@ -309,7 +320,7 @@ const renewLocker = async (gymId, data) => {
     end_date:        endDate,
     total_visits:    null,
     used_visits:     0,
-    status:          'active',
+    status,
     price:           Number(price),
     duration_days:   durationDays ? Number(durationDays) : null,
     duration_months: null,

@@ -4,10 +4,6 @@ import { renewLockerThunk, dismissLockerThunk, fetchPresets } from '../../../sto
 import { createPaymentThunk } from '../../../store/slices/paymentsSlice.js'
 import styles from '../../../styles/clientProfile.module.css'
 
-function formatDateInput(dateStr) {
-  if (!dateStr) return ''
-  return dateStr.split('T')[0]
-}
 
 export default function LockerRenewModal({ clientId, expiredSub, onClose, onSuccess }) {
   const dispatch = useDispatch()
@@ -17,7 +13,7 @@ export default function LockerRenewModal({ clientId, expiredSub, onClose, onSucc
   const matchedPreset = presets.find(p => p.category === 'locker' && p.label === expiredSub?.label)
     ?? presets.find(p => p.category === 'locker')
 
-  const [startDate, setStartDate] = useState(formatDateInput(expiredSub?.end_date) || formatDateInput(new Date().toISOString()))
+  const [startDate, setStartDate] = useState(expiredSub?.end_date?.split('T')[0] || new Date().toISOString().split('T')[0])
   const [price, setPrice] = useState(expiredSub?.price ?? 0)
 
   useEffect(() => {

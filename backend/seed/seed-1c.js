@@ -281,6 +281,28 @@ async function insertInBatches(db, table, columns, allRows) {
       ];
     });
 
+  // For lockers: keep only the latest per client as expired, cancel the rest
+  // (clients may have 10+ overdue locker records from 1C — no need to dismiss each manually)
+  const latestLockerByClient = {}; // clientId -> index of latest locker row
+  subRows.forEach((row, i) => {
+    const clientId = row[2];
+    const category = row[4];
+    const endDate  = row[7] || '0000-00-00';
+    if (category !== 'locker') return;
+    const prev = latestLockerByClient[clientId];
+    if (prev === undefined || endDate > (subRows[prev][7] || '0000-00-00')) {
+      latestLockerByClient[clientId] = i;
+    }
+  });
+  subRows.forEach((row, i) => {
+    const clientId = row[2];
+    const category = row[4];
+    if (category !== 'locker') return;
+    if (latestLockerByClient[clientId] !== i) row[10] = 'cancelled'; // cancel all but latest
+  });
+  const cancelledLockers = subRows.filter(r => r[4] === 'locker' && r[10] === 'cancelled').length;
+  if (cancelledLockers > 0) console.log(`  → Скасовано старих ящиків: ${cancelledLockers}`);
+
   await insertInBatches(db, 'subscriptions',
     ['id', 'gym_id', 'client_id', 'type', 'category', 'label',
      'start_date', 'end_date', 'total_visits', 'used_visits', 'status',
