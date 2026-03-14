@@ -83,6 +83,7 @@ export default function AddSubscriptionModal({ clientId, onClose }) {
       totalVisits: preset.type === 'visits' ? preset.total_visits : null,
       price: Number(price),
       durationDays: preset.duration_days,
+      durationMonths: preset.duration_months,
       multiGym: preset.multi_gym || false,
     }))
     if (createSubscriptionThunk.rejected.match(subResult)) {

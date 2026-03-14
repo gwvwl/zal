@@ -195,9 +195,9 @@ const getPresets = async (gymId) => {
 };
 
 const createPreset = async (data) => {
-  const { gym_id, label, type, category, duration_days, price, total_visits } =
+  const { gym_id, label, type, category, duration_days, duration_months, price, total_visits } =
     data;
-  if (!gym_id || !label || !type || !category || !duration_days || !price) {
+  if (!gym_id || !label || !type || !category || (!duration_days && !duration_months) || !price) {
     const err = new Error("Усі поля обовʼязкові");
     err.status = 400;
     throw err;

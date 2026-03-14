@@ -28,6 +28,10 @@ const SubscriptionPreset = sequelize.define('SubscriptionPreset', {
     type: DataTypes.INTEGER,
     allowNull: true,
   },
+  duration_months: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
   price: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,

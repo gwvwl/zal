@@ -58,6 +58,10 @@ const Subscription = sequelize.define('Subscription', {
     type: DataTypes.INTEGER,
     allowNull: true,
   },
+  duration_months: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
   frozen_from: {
     type: DataTypes.DATEONLY,
     allowNull: true,

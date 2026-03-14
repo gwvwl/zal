@@ -135,7 +135,9 @@ export default function Presets() {
                       {CATEGORY_LABELS[p.category] || p.category}
                     </span>
                   </td>
-                  <td>{p.duration_days}</td>
+                  <td>
+                    {p.duration_months ? `${p.duration_months} міс.` : p.duration_days ? `${p.duration_days} дн.` : '—'}
+                  </td>
                   <td>{p.total_visits || '—'}</td>
                   <td style={{ fontWeight: 600 }}>{Number(p.price)} грн</td>
                   <td>{gymName(p.gym_id)}</td>
@@ -183,7 +185,9 @@ function PresetModal({ mode, initial, gyms, onSave, onClose }) {
   const [label, setLabel] = useState(initial.label || '')
   const [type, setType] = useState(initial.type || 'unlimited')
   const [category, setCategory] = useState(initial.category || 'gym')
+  const [durationUnit, setDurationUnit] = useState(initial.duration_months ? 'months' : 'days')
   const [durationDays, setDurationDays] = useState(initial.duration_days || '')
+  const [durationMonths, setDurationMonths] = useState(initial.duration_months || '')
   const [price, setPrice] = useState(initial.price || '')
   const [totalVisits, setTotalVisits] = useState(initial.total_visits || '')
   const [gymId, setGymId] = useState(initial.gym_id || gyms[0]?.id || '')
@@ -196,7 +200,8 @@ function PresetModal({ mode, initial, gyms, onSave, onClose }) {
       label,
       type,
       category,
-      duration_days: Number(durationDays),
+      duration_days:   durationUnit === 'days' ? Number(durationDays) : null,
+      duration_months: durationUnit === 'months' ? Number(durationMonths) : null,
       price: Number(price),
       is_active: isActive,
       multi_gym: multiGym,
@@ -246,8 +251,23 @@ function PresetModal({ mode, initial, gyms, onSave, onClose }) {
             </div>
             <div className={s.fieldRow}>
               <div className={s.field}>
-                <label className={s.label}>Тривалість (днів)</label>
-                <input className={s.input} type="number" value={durationDays} onChange={e => setDurationDays(e.target.value)} required min="1" />
+                <label className={s.label}>Тривалість</label>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <select
+                    className={s.select}
+                    style={{ width: 110, flexShrink: 0 }}
+                    value={durationUnit}
+                    onChange={e => setDurationUnit(e.target.value)}
+                  >
+                    <option value="days">Днів</option>
+                    <option value="months">Місяців</option>
+                  </select>
+                  {durationUnit === 'days' ? (
+                    <input className={s.input} type="number" value={durationDays} onChange={e => setDurationDays(e.target.value)} required min="1" />
+                  ) : (
+                    <input className={s.input} type="number" value={durationMonths} onChange={e => setDurationMonths(e.target.value)} required min="1" />
+                  )}
+                </div>
               </div>
               <div className={s.field}>
                 <label className={s.label}>Ціна (грн)</label>

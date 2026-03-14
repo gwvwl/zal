@@ -29,10 +29,10 @@ const getAll = async (gymId, { clientId, status, category } = {}) => {
 };
 
 const create = async (gymId, data) => {
-  const { clientId, type, category, label, totalVisits, price, durationDays, multiGym } = data;
+  const { clientId, type, category, label, totalVisits, price, durationDays, durationMonths, multiGym } = data;
 
-  if (!clientId || !type || !category || !label || price == null || !durationDays) {
-    const err = new Error('clientId, type, category, label, price, durationDays are required');
+  if (!clientId || !type || !category || !label || price == null || (!durationDays && !durationMonths)) {
+    const err = new Error('clientId, type, category, label, price, and durationDays or durationMonths are required');
     err.status = 400;
     throw err;
   }
@@ -51,7 +51,12 @@ const create = async (gymId, data) => {
     err.status = 400;
     throw err;
   }
-  if (Number(durationDays) <= 0) {
+  if (durationDays && Number(durationDays) <= 0) {
+    const err = new Error('Тривалість повинна бути більше 0');
+    err.status = 400;
+    throw err;
+  }
+  if (durationMonths && Number(durationMonths) <= 0) {
     const err = new Error('Тривалість повинна бути більше 0');
     err.status = 400;
     throw err;
@@ -97,7 +102,8 @@ const create = async (gymId, data) => {
     used_visits:  0,
     status:       'purchased',
     price:        Number(price),
-    duration_days: Number(durationDays),
+    duration_days:   durationDays ? Number(durationDays) : null,
+    duration_months: durationMonths ? Number(durationMonths) : null,
     purchased_at: new Date(),
     activated_at: null,
     created_at:   new Date(),
@@ -109,6 +115,20 @@ function addDays(dateStr, days) {
   const d = new Date(dateStr);
   d.setDate(d.getDate() + days);
   return d.toISOString().split('T')[0];
+}
+
+// Додає N календарних місяців і віднімає 1 день
+// 02.03 + 1 міс → 02.04 − 1 д = 01.04
+function addMonths(dateStr, months) {
+  const d = new Date(dateStr);
+  d.setMonth(d.getMonth() + months);
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().split('T')[0];
+}
+
+function calcEndDate(startStr, sub) {
+  if (sub.duration_months) return addMonths(startStr, sub.duration_months);
+  return addDays(startStr, sub.duration_days);
 }
 
 const activate = async (gymId, id) => {
@@ -145,7 +165,7 @@ const activate = async (gymId, id) => {
     }
 
     const today = new Date().toISOString().split('T')[0];
-    const endDate = addDays(today, sub.duration_days);
+    const endDate = calcEndDate(today, sub);
 
     await sub.update({
       status: 'active',
@@ -276,21 +296,23 @@ const renewLocker = async (gymId, data) => {
   }
 
   const start = startDate || new Date().toISOString().split('T')[0];
-  const endDate = addDays(start, Number(durationDays));
+  const tempSub = { duration_days: durationDays ? Number(durationDays) : null, duration_months: null };
+  const endDate = calcEndDate(start, tempSub);
 
   return Subscription.create({
-    gym_id:        gymId,
-    client_id:     clientId,
+    gym_id:          gymId,
+    client_id:       clientId,
     type,
-    category:      'locker',
+    category:        'locker',
     label,
-    start_date:    start,
-    end_date:      endDate,
-    total_visits:  null,
-    used_visits:   0,
-    status:        'active',
-    price:         Number(price),
-    duration_days: Number(durationDays),
+    start_date:      start,
+    end_date:        endDate,
+    total_visits:    null,
+    used_visits:     0,
+    status:          'active',
+    price:           Number(price),
+    duration_days:   durationDays ? Number(durationDays) : null,
+    duration_months: null,
     purchased_at:  new Date(),
     activated_at:  new Date(),
     created_at:    new Date(),
